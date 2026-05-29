@@ -8,6 +8,7 @@ export type Item = {
   title: string
   description: string
   image?: string | null
+  image_url?: string | null
   category: string
   location: string
   status: 'open' | 'matched' | 'resolved'

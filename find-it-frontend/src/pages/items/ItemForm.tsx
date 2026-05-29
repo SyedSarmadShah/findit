@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import ImageUploader from '../../components/ui/ImageUploader'
 
 type ItemFormProps = {
   initial?: any
@@ -18,6 +19,7 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
     is_anonymous: initial.is_anonymous || false,
   })
   const [image, setImage] = useState<File | null>(null)
+  const existingImageUrl = initial.image_url || initial.image || null
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -45,34 +47,73 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 rounded-2xl bg-white/80 p-6">
-      <div className="grid gap-2 sm:grid-cols-2">
-        <select value={form.item_type} onChange={(e) => setForm({ ...form, item_type: e.target.value })} className="rounded-2xl border px-3 py-2">
+    <form onSubmit={handleSubmit} className="grid gap-5 rounded-[2rem] border border-black/5 bg-white/80 p-5 shadow-[0_18px_50px_rgba(11,23,39,0.08)] backdrop-blur dark:border-white/10 dark:bg-white/5 sm:p-6">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <select
+          value={form.item_type}
+          onChange={(e) => setForm({ ...form, item_type: e.target.value })}
+          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper"
+        >
           <option value="lost">Lost</option>
           <option value="found">Found</option>
         </select>
-        <input placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="rounded-2xl border px-3 py-2" />
+        <input
+          placeholder="Title"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+        />
       </div>
 
-      <textarea placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="min-h-[120px] rounded-2xl border px-3 py-2" />
+      <textarea
+        placeholder="Description"
+        value={form.description}
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+        className="min-h-[140px] rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+      />
 
-      <div className="grid gap-2 sm:grid-cols-3">
-        <input placeholder="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="rounded-2xl border px-3 py-2" />
-        <input placeholder="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="rounded-2xl border px-3 py-2" />
-        <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="rounded-2xl border px-3 py-2" />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <input
+          placeholder="Category"
+          value={form.category}
+          onChange={(e) => setForm({ ...form, category: e.target.value })}
+          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+        />
+        <input
+          placeholder="Location"
+          value={form.location}
+          onChange={(e) => setForm({ ...form, location: e.target.value })}
+          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+        />
+        <input
+          type="date"
+          value={form.date}
+          onChange={(e) => setForm({ ...form, date: e.target.value })}
+          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper"
+        />
       </div>
 
-      <div className="flex items-center gap-4">
-        <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
-        <label className="flex items-center gap-2 text-sm text-ink/65">
-          <input type="checkbox" checked={form.is_anonymous} onChange={(e) => setForm({ ...form, is_anonymous: e.target.checked })} />
+      <ImageUploader value={image} onChange={setImage} previewUrl={existingImageUrl} />
+
+      <div className="flex items-center gap-4 rounded-[1.25rem] bg-black/5 px-4 py-3 dark:bg-white/5">
+        <label className="flex items-center gap-2 text-sm text-ink/65 dark:text-paper/70">
+          <input
+            type="checkbox"
+            checked={form.is_anonymous}
+            onChange={(e) => setForm({ ...form, is_anonymous: e.target.checked })}
+            className="h-4 w-4 rounded border-black/20 text-moss focus:ring-moss"
+          />
           Post anonymously
         </label>
       </div>
 
       {error ? <div className="text-sm text-rust">{error}</div> : null}
       <div className="flex items-center gap-3">
-        <button disabled={saving} className="rounded-2xl bg-ink px-4 py-2 text-white" type="submit">
+        <button
+          disabled={saving}
+          className="rounded-full bg-navy px-5 py-3 text-sm font-semibold text-paper transition hover:-translate-y-0.5 hover:bg-navy/95 disabled:translate-y-0 disabled:opacity-60"
+          type="submit"
+        >
           {saving ? 'Saving...' : 'Save Item'}
         </button>
       </div>

@@ -125,16 +125,17 @@ export default function ItemDetailPage() {
 
       <ItemCard
         id={item.id}
+        itemType={item.item_type}
         title={item.title}
         description={item.description}
         category={item.category}
         location={item.location}
         date={item.date}
         status={item.status}
-        imageUrl={item.image ?? undefined}
+        imageUrl={item.image_url ?? item.image ?? undefined}
       />
 
-      <section className="grid gap-4 rounded-2xl border border-black/5 bg-white/70 p-5 dark:border-white/10 dark:bg-white/5">
+      <section id="claim-item" className="grid gap-4 rounded-2xl border border-black/5 bg-white/70 p-5 dark:border-white/10 dark:bg-white/5">
         <h2 className="font-display text-2xl font-bold">Claim this item</h2>
         <p className="text-sm text-ink/65 dark:text-paper/65">
           Send a message with identifying details (brand, color, content) so the owner can verify your claim.

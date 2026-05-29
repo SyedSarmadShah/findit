@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import ItemCard from '../../components/items/ItemCard'
-import ItemSkeleton from '../../components/ui/ItemSkeleton'
+import ItemGrid from '../../components/items/ItemGrid'
 import { listItems } from '../../services/itemService'
 
 export default function DashboardPage() {
@@ -71,23 +70,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-5">
-          {loading
-            ? Array.from({ length: 2 }).map((_, index) => <ItemSkeleton key={index} />)
-            : items.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  id={item.id}
-                  title={item.title}
-                  description={item.description}
-                  category={item.category}
-                  location={item.location}
-                  date={item.date}
-                  status={item.status}
-                  imageUrl={item.image}
-                />
-              ))}
-        </div>
+        <ItemGrid
+          loading={loading}
+          items={items}
+          skeletonCount={2}
+          emptyTitle="No recent items yet"
+          emptyDescription="New lost and found posts will appear here once the campus feed is active."
+        />
       </section>
     </div>
   )

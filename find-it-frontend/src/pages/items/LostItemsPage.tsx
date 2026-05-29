@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import ItemCard from '../../components/items/ItemCard'
-import ItemSkeleton from '../../components/ui/ItemSkeleton'
+import ItemGrid from '../../components/items/ItemGrid'
 import SearchFilters from '../../components/ui/SearchFilters'
 import { listItems } from '../../services/itemService'
 
@@ -83,25 +82,12 @@ export default function LostItemsPage() {
         onReset={resetFilters}
       />
 
-      <div className="grid gap-5">
-        {loading
-          ? Array.from({ length: 3 }).map((_, index) => <ItemSkeleton key={index} />)
-          : items.length > 0
-            ? items.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  id={item.id}
-                  title={item.title}
-                  description={item.description}
-                  category={item.category}
-                  location={item.location}
-                  date={item.date}
-                  status={item.status}
-                  imageUrl={item.image}
-                />
-              ))
-            : <div className="rounded-[1.5rem] border border-dashed border-black/10 bg-white/60 p-8 text-center text-sm text-ink/60 dark:border-white/10 dark:bg-white/5 dark:text-paper/60">No lost items match your filters.</div>}
-      </div>
+      <ItemGrid
+        loading={loading}
+        items={items}
+        emptyTitle="No lost items found"
+        emptyDescription="Try adjusting your search, category, or status filters."
+      />
     </div>
   )
 }

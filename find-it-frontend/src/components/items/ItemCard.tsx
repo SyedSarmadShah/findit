@@ -1,56 +1,85 @@
 import { Link } from 'react-router-dom'
 
 type ItemCardProps = {
-  id?: number
+  id: number
+  itemType?: 'lost' | 'found'
   title: string
   description: string
   category: string
   location: string
   date: string
   status: string
-  imageUrl?: string
+  imageUrl?: string | null
 }
 
-export default function ItemCard({ id, title, description, category, location, date, status, imageUrl }: ItemCardProps) {
-  const statusTone =
-    status === 'resolved'
-      ? 'bg-moss/15 text-moss dark:bg-moss/25 dark:text-paper'
-      : status === 'matched'
-        ? 'bg-rust/15 text-rust dark:bg-rust/25 dark:text-paper'
-        : 'bg-ink/10 text-ink dark:bg-white/10 dark:text-paper'
+const PLACEHOLDER_IMAGE =
+  'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 viewBox%3D%220 0 1200 900%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22g%22 x1%3D%220%22 y1%3D%220%22 x2%3D%221%22 y2%3D%221%22%3E%3Cstop offset%3D%220%25%22 stop-color%3D%22%23f4ebda%22/%3E%3Cstop offset%3D%22100%25%22 stop-color%3D%22%23e2d3b4%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width%3D%221200%22 height%3D%22900%22 rx%3D%2256%22 fill%3D%22url(%23g)%22/%3E%3Ccircle cx%3D%22270%22 cy%3D%22210%22 r%3D%22100%22 fill%3D%22%231b2b40%22 fill-opacity%3D%220.08%22/%3E%3Ccircle cx%3D%22920%22 cy%3D%22110%22 r%3D%22140%22 fill%3D%22%2331564c%22 fill-opacity%3D%220.12%22/%3E%3Cpath d%3D%22M190 670l180-190 160 150 120-110 250 250H190z%22 fill%3D%22%231b2b40%22 fill-opacity%3D%220.11%22/%3E%3Crect x%3D%22310%22 y%3D%22580%22 width%3D%22580%22 height%3D%2268%22 rx%3D%2234%22 fill%3D%22%231b2b40%22 fill-opacity%3D%220.08%22/%3E%3Ctext x%3D%22600%22 y%3D%22495%22 text-anchor%3D%22middle%22 font-family%3D%22Arial%2Csans-serif%22 font-size%3D%2272%22 font-weight%3D%22700%22 fill%3D%22%231b2b40%22 fill-opacity%3D%220.38%22%3ENo image uploaded%3C/text%3E%3C/svg%3E'
+
+const statusTone = {
+  open: 'bg-navy/10 text-navy dark:bg-white/10 dark:text-paper',
+  matched: 'bg-moss/15 text-moss dark:bg-moss/25 dark:text-paper',
+  resolved: 'bg-rust/15 text-rust dark:bg-rust/25 dark:text-paper',
+}
+
+const itemTypeTone = {
+  lost: 'bg-rust/15 text-rust dark:bg-rust/25 dark:text-paper',
+  found: 'bg-moss/15 text-moss dark:bg-moss/25 dark:text-paper',
+}
+
+function formatDate(dateValue: string) {
+  const parsedDate = new Date(dateValue)
+  if (Number.isNaN(parsedDate.getTime())) return dateValue
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(parsedDate)
+}
+
+export default function ItemCard({ id, itemType = 'lost', title, description, category, location, date, status, imageUrl }: ItemCardProps) {
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1)
+  const itemTypeLabel = itemType === 'found' ? 'Found' : 'Lost'
+  const resolvedImage = imageUrl || PLACEHOLDER_IMAGE
 
   return (
-    <article className="overflow-hidden rounded-[1.75rem] border border-black/5 bg-white/75 shadow-glow backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(7,17,31,0.18)] dark:border-white/10 dark:bg-white/5">
-      <div className="grid gap-4 p-4 sm:grid-cols-[200px_1fr] sm:p-5">
-        <div className="relative h-44 overflow-hidden rounded-2xl bg-sand dark:bg-white/5">
-          {imageUrl ? (
-            <img src={imageUrl} alt={title} className="h-full w-full object-cover transition duration-500 hover:scale-105" />
-          ) : (
-            <div className="flex h-full w-full items-end bg-[linear-gradient(135deg,rgba(49,91,79,0.16),rgba(196,91,42,0.18))] p-4 text-sm font-medium text-ink/55 dark:text-paper/55">
-              No image uploaded
-            </div>
-          )}
-          <div className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink shadow-sm backdrop-blur dark:bg-ink/70 dark:text-paper">
-            {category || 'General'}
-          </div>
+    <article className="group overflow-hidden rounded-[1.75rem] border border-black/5 bg-white/80 shadow-[0_18px_50px_rgba(11,23,39,0.08)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(11,23,39,0.16)] dark:border-white/10 dark:bg-white/5">
+      <div className="relative aspect-[4/3] overflow-hidden bg-sand dark:bg-white/5">
+        <img src={resolvedImage} alt={title} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+        <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+          <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${itemTypeTone[itemType]}`}>
+            {itemTypeLabel}
+          </span>
+          <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusTone[status as keyof typeof statusTone] ?? statusTone.open}`}>
+            {statusLabel}
+          </span>
         </div>
-        <div className="flex flex-col justify-between gap-4">
-          <div>
-            <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink/45 dark:text-paper/45">
-              <span className={`rounded-full px-3 py-1 ${statusTone}`}>{status}</span>
-              <span className="rounded-full bg-black/5 px-3 py-1 dark:bg-white/5">{location || 'Campus location'}</span>
-            </div>
-            <h3 className="font-display text-2xl font-bold tracking-tight text-ink dark:text-paper">{title}</h3>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-ink/70 dark:text-paper/70">{description}</p>
+      </div>
+
+      <div className="flex h-full flex-col gap-4 p-5 sm:p-6">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/45 dark:text-paper/45">
+            <span className="rounded-full bg-black/5 px-3 py-1 dark:bg-white/5">{category || 'General'}</span>
+            <span className="rounded-full bg-black/5 px-3 py-1 dark:bg-white/5">{location || 'Campus location'}</span>
+            <span className="rounded-full bg-black/5 px-3 py-1 dark:bg-white/5">{formatDate(date)}</span>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-ink/60 dark:text-paper/60">
-            <span className="rounded-full bg-black/5 px-3 py-1 dark:bg-white/5">{date}</span>
-            {id ? (
-              <Link to={`/items/${id}`} className="rounded-full bg-moss px-3 py-1 font-medium text-paper transition hover:opacity-90 dark:bg-paper dark:text-ink">
-                View details
-              </Link>
-            ) : null}
-          </div>
+          <h3 className="font-display text-2xl font-bold tracking-tight text-ink dark:text-paper">{title}</h3>
+          <p className="text-sm leading-6 text-ink/70 dark:text-paper/70">{description}</p>
+        </div>
+
+        <div className="mt-auto flex flex-wrap gap-3 pt-2">
+          <Link
+            to={`/items/${id}`}
+            className="inline-flex items-center justify-center rounded-full bg-navy px-5 py-3 text-sm font-semibold text-paper transition duration-200 hover:-translate-y-0.5 hover:bg-navy/95 hover:shadow-lg hover:shadow-navy/10"
+          >
+            View Details
+          </Link>
+          <Link
+            to={`/items/${id}#claim-item`}
+            className="inline-flex items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-paper transition duration-200 hover:-translate-y-0.5 hover:bg-moss/95 hover:shadow-lg hover:shadow-moss/10"
+          >
+            Claim Item
+          </Link>
         </div>
       </div>
     </article>
