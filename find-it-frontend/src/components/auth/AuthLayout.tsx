@@ -1,0 +1,88 @@
+import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+
+type AuthLayoutProps = {
+  eyebrow: string
+  title: string
+  description: string
+  footerLabel: string
+  footerLinkText: string
+  footerLinkTo: string
+  children: ReactNode
+}
+
+export default function AuthLayout({
+  eyebrow,
+  title,
+  description,
+  footerLabel,
+  footerLinkText,
+  footerLinkTo,
+  children,
+}: AuthLayoutProps) {
+  return (
+    <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(199,123,98,0.28),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(44,62,91,0.18),_transparent_32%),linear-gradient(180deg,_#d1a197_0%,_#f1dfd3_24%,_#f8f3ee_60%,_#efe8e3_100%)] px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="grid min-h-[calc(100vh-8.5rem)] w-full overflow-hidden rounded-[2.5rem] border border-white/65 bg-white/78 shadow-[0_30px_90px_rgba(34,20,17,0.22)] backdrop-blur-xl md:grid-cols-[minmax(0,1.02fr)_minmax(360px,0.98fr)]">
+        <section className="flex flex-col items-start justify-center px-8 py-10 text-left sm:px-12 sm:py-12 lg:px-16">
+          <div className="flex items-center gap-4">
+            <img src="/logo-find-it.png" alt="Find-It" className="h-12 w-12 object-contain sm:h-14" />
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#9b6a5f]">{eyebrow}</p>
+              <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-[#1c1c1e] sm:text-5xl">{title}</h1>
+            </div>
+          </div>
+          <p className="mt-4 max-w-md text-sm leading-6 text-[#4f4a47] sm:text-base">{description}</p>
+
+          <div className="mt-10 max-w-md">
+            {children}
+
+            <div className="mt-8 flex items-center gap-4">
+              <div className="h-px flex-1 bg-black/10" />
+              <span className="whitespace-nowrap text-xs font-medium uppercase tracking-[0.22em] text-black/42">Or continue with</span>
+              <div className="h-px flex-1 bg-black/10" />
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              <button
+                className="flex h-12 items-center justify-center rounded-2xl border border-black/8 bg-white text-xl shadow-[0_12px_24px_rgba(17,17,17,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(17,17,17,0.12)]"
+                type="button"
+                aria-label="Continue with Google"
+              >
+                G
+              </button>
+              <button
+                className="flex h-12 items-center justify-center rounded-2xl border border-black/8 bg-white text-xl shadow-[0_12px_24px_rgba(17,17,17,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(17,17,17,0.12)]"
+                type="button"
+                aria-label="Continue with Apple"
+              >
+                A
+              </button>
+              <button
+                className="flex h-12 items-center justify-center rounded-2xl border border-black/8 bg-white text-xl shadow-[0_12px_24px_rgba(17,17,17,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(17,17,17,0.12)]"
+                type="button"
+                aria-label="Continue with Facebook"
+              >
+                f
+              </button>
+            </div>
+
+            <p className="mt-8 text-sm text-[#5f5954]">
+              {footerLabel}{' '}
+              <Link className="font-semibold text-[#1c1c1e] underline decoration-[#1c1c1e]/25 underline-offset-4 transition hover:decoration-[#1c1c1e]/55" to={footerLinkTo}>
+                {footerLinkText}
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        <aside className="relative hidden md:flex md:items-center md:justify-center lg:p-10">
+          <div className="w-full h-full rounded-r-[2.5rem] overflow-hidden">
+            <img src="/signup.png" alt="Signup art" className="w-full h-full object-cover" />
+          </div>
+        </aside>
+        </div>
+      </div>
+    </div>
+  )
+}
