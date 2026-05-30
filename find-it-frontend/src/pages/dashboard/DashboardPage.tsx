@@ -1,35 +1,39 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import StatCard from '../../components/dashboard/StatCard'
-import ItemGrid from '../../components/items/ItemGrid'
-import MatchCard from '../../components/items/MatchCard'
 import CompareMatchModal from '../../components/items/CompareMatchModal'
 import {
-  confirmMatch,
+  CommunityTrustSection,
+  DashboardHero,
+  NotificationPanel,
+  RecentFoundItems,
+  RecentLostItems,
+  ReportTrackerPanel,
+  SearchSection,
+} from '../../components/dashboard/DashboardSections'
+import {
   getDashboardAnalytics,
   type DashboardAnalytics,
+  listClaimHistory,
   listItems,
   listMatches,
+  listNotifications,
   rejectMatch,
+  confirmMatch,
+  type Item,
+  type ItemClaim,
+  type ItemMatch,
+  type Notification,
 } from '../../services/itemService'
 import { useToast } from '../../components/ui/ToastProvider'
 
-const CHART_COLORS = ['#315b4f', '#c45b2a', '#2d4f80', '#b58f2a', '#7a3d2c', '#2f6f69']
-
-function StatIcon({ path }: { path: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d={path} />
-    </svg>
-  )
-}
-
 export default function DashboardPage() {
-  const [items, setItems] = useState<any[]>([])
-  const [matches, setMatches] = useState<any[]>([])
+  const [lostItems, setLostItems] = useState<Item[]>([])
+  const [foundItems, setFoundItems] = useState<Item[]>([])
+  const [matches, setMatches] = useState<ItemMatch[]>([])
+  const [reports, setReports] = useState<ItemClaim[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
-  const [selectedMatch, setSelectedMatch] = useState<any | null>(null)
+  const [selectedMatch, setSelectedMatch] = useState<ItemMatch | null>(null)
   const [matchLoadingId, setMatchLoadingId] = useState<number | null>(null)
   const hasShownAnalyticsError = useRef(false)
   const { showToast } = useToast()
@@ -42,17 +46,30 @@ export default function DashboardPage() {
       setLoading(true)
     }
     try {
-      const [analyticsData, itemData, matchData] = await Promise.all([getDashboardAnalytics(), listItems({}), listMatches()])
-      setAnalytics(analyticsData)
-      setItems(itemData.slice(0, 4))
-      setMatches(matchData.slice(0, 4))
-    } catch (error) {
-      if (showError && !hasShownAnalyticsError.current) {
+      const [analyticsResult, lostResult, foundResult, matchResult, reportsResult, notificationsResult] = await Promise.allSettled([
+        getDashboardAnalytics(),
+        listItems({ item_type: 'lost' }),
+        listItems({ item_type: 'found' }),
+        listMatches(),
+        listClaimHistory(),
+        listNotifications(),
+      ])
+
+      if (analyticsResult.status === 'fulfilled') setAnalytics(analyticsResult.value)
+      if (lostResult.status === 'fulfilled') setLostItems(lostResult.value)
+      if (foundResult.status === 'fulfilled') setFoundItems(foundResult.value)
+      if (matchResult.status === 'fulfilled') setMatches(matchResult.value)
+      if (reportsResult.status === 'fulfilled') setReports(reportsResult.value)
+      if (notificationsResult.status === 'fulfilled') setNotifications(notificationsResult.value)
+
+      const failures = [analyticsResult, lostResult, foundResult, matchResult, reportsResult, notificationsResult].filter((result) => result.status === 'rejected')
+      if (failures.length && showError && !hasShownAnalyticsError.current) {
         hasShownAnalyticsError.current = true
-        showToast('Unable to load dashboard analytics right now.', 'error')
+        showToast('Some dashboard sections could not load right now.', 'error')
       }
+    } catch (error) {
       if (import.meta.env.DEV) {
-        console.error('Dashboard analytics refresh failed', error)
+        console.error('Dashboard refresh failed', error)
       }
     } finally {
       if (!silent) {
@@ -87,15 +104,15 @@ export default function DashboardPage() {
   const handleMatchReview = async (matchId: number, action: 'confirm' | 'reject') => {
     setMatchLoadingId(matchId)
     try {
-      if (action === 'confirm') {
-        await confirmMatch(matchId)
-        showToast('Match confirmed.', 'success')
-      } else {
+      if (action === 'reject') {
         await rejectMatch(matchId)
         showToast('Match rejected.', 'info')
+      } else {
+        await confirmMatch(matchId)
+        showToast('Match confirmed. We notified the other party.', 'success')
+        setSelectedMatch(null)
       }
       await loadDashboard({ silent: true, showError: false })
-      setSelectedMatch(null)
     } catch {
       showToast('Unable to update match right now.', 'error')
     } finally {
@@ -104,159 +121,114 @@ export default function DashboardPage() {
   }
 
   const summary = analytics?.summary
-  const trends = analytics?.trends
-  const monthlyTrend = analytics?.charts.monthly_recovery_trend ?? []
-  const recoveryDelta = useMemo(() => {
-    if (monthlyTrend.length < 2) {
-      return 0
-    }
+  const mergedItems = useMemo(() => [...lostItems, ...foundItems], [foundItems, lostItems])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const normalizedQuery = searchQuery.trim().toLowerCase()
 
-    const current = monthlyTrend[monthlyTrend.length - 1]?.returned ?? 0
-    const previous = monthlyTrend[monthlyTrend.length - 2]?.returned ?? 0
-    if (!previous) {
-      return current > 0 ? 100 : 0
-    }
-    return Number((((current - previous) / previous) * 100).toFixed(2))
-  }, [monthlyTrend])
+  const filteredLostItems = useMemo(
+    () =>
+      lostItems.filter((item) => {
+        const matchesQuery = !normalizedQuery || [item.title, item.description, item.category, item.location].some((value) => value?.toLowerCase().includes(normalizedQuery))
+        const matchesCategory = !selectedCategory || item.category?.toLowerCase() === selectedCategory.toLowerCase()
+        return matchesQuery && matchesCategory
+      }),
+    [lostItems, normalizedQuery, selectedCategory],
+  )
 
-  const statCards = summary
-    ? [
-        {
-          title: 'Total Lost Items',
-          value: summary.total_lost_items.toLocaleString(),
-          trend: undefined,
-          icon: <StatIcon path="M12 3l8 4v5c0 5-3.4 8.6-8 9-4.6-.4-8-4-8-9V7l8-4z" />,
-          accentClass: 'from-rust/20 to-transparent',
-        },
-        {
-          title: 'Total Found Items',
-          value: summary.total_found_items.toLocaleString(),
-          trend: undefined,
-          icon: <StatIcon path="M3 12h18M12 3v18" />,
-          accentClass: 'from-moss/20 to-transparent',
-        },
-      ]
-    : []
+  const filteredFoundItems = useMemo(
+    () =>
+      foundItems.filter((item) => {
+        const matchesQuery = !normalizedQuery || [item.title, item.description, item.category, item.location].some((value) => value?.toLowerCase().includes(normalizedQuery))
+        const matchesCategory = !selectedCategory || item.category?.toLowerCase() === selectedCategory.toLowerCase()
+        return matchesQuery && matchesCategory
+      }),
+    [foundItems, normalizedQuery, selectedCategory],
+  )
+
+  const filteredMatches = useMemo(
+    () =>
+      matches
+        .filter((match) => {
+          const searchable = [match.lost_item.title, match.lost_item.description, match.lost_item.category, match.found_item.title, match.found_item.description, match.found_item.category]
+          const matchesQuery = !normalizedQuery || searchable.some((value) => value?.toLowerCase().includes(normalizedQuery))
+          const matchesCategory = !selectedCategory || [match.lost_item.category, match.found_item.category].some((value) => value?.toLowerCase() === selectedCategory.toLowerCase())
+          return matchesQuery && matchesCategory
+        })
+        .sort((left, right) => right.score_percentage - left.score_percentage),
+    [matches, normalizedQuery, selectedCategory],
+  )
+
+  const filteredNotifications = useMemo(
+    () =>
+      notifications.filter((notification) => {
+        if (!normalizedQuery) return true
+        return [notification.title, notification.message, notification.type].some((value) => value.toLowerCase().includes(normalizedQuery))
+      }),
+    [notifications, normalizedQuery],
+  )
+
+  const filteredReports = useMemo(
+    () =>
+      reports.filter((report) => {
+        if (!normalizedQuery) return true
+        return [report.item_title ?? '', report.reason, report.details, report.status].some((value) => value.toLowerCase().includes(normalizedQuery))
+      }),
+    [normalizedQuery, reports],
+  )
+
+
+
+  const searchCount = filteredLostItems.length + filteredFoundItems.length + filteredMatches.length
 
   return (
-    <div className="space-y-8 pb-10">
-      <section className="grid gap-6 rounded-[2rem] border border-black/5 bg-white/70 p-4 shadow-glow backdrop-blur dark:border-white/10 dark:bg-white/5 sm:p-6 lg:grid-cols-[1.5fr_1fr] lg:p-10">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rust dark:text-paper/60">Dashboard</p>
-          <h1 className="mt-3 max-w-2xl font-display text-3xl font-bold tracking-tight text-ink dark:text-paper sm:text-5xl">
-            A modern campus portal for lost and found items.
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-ink/70 dark:text-paper/70">
-            Live analytics for your campus recovery platform, with instant visibility into claims, returns, and match quality.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Real-time metrics</span>
-            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Recovery trend charts</span>
-            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Category insights</span>
-          </div>
-        </div>
+    <div className="space-y-8 pb-28">
+      <DashboardHero
+        recoveredCount={summary?.items_successfully_returned ?? 0}
+        successRate={summary?.success_percentage ?? 0}
+        activeReports={summary?.active_reports ?? 0}
+      />
 
-        <div className="grid gap-4 rounded-[1.75rem] bg-ink p-5 text-paper dark:bg-paper dark:text-ink sm:p-6">
-          <div>
-            <p className="text-sm uppercase tracking-[0.18em] text-paper/55 dark:text-ink/55">Quick actions</p>
-            <h2 className="mt-2 font-display text-2xl font-bold">Start here</h2>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Link to="/items/new" className="rounded-2xl bg-white/10 p-4 text-paper dark:bg-ink/5 hover:opacity-95">
-              <p className="text-sm font-semibold text-white dark:text-ink">Lost item</p>
-              <p className="mt-1 text-sm text-paper/90 dark:text-ink/70">Post a missing item report.</p>
-            </Link>
-            <Link to="/items/new" className="rounded-2xl bg-white/10 p-4 text-paper dark:bg-ink/5 hover:opacity-95">
-              <p className="text-sm font-semibold text-white dark:text-ink">Found item</p>
-              <p className="mt-1 text-sm text-paper/90 dark:text-ink/70">Log an item someone may claim.</p>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <SearchSection
+        query={searchQuery}
+        onQueryChange={setSearchQuery}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        resultCount={searchCount}
+      />
 
-      <section className="space-y-4">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Platform statistics</p>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Recovery metrics at a glance</h2>
-        </div>
-        {loading || !analytics ? (
-          <div className="h-20 w-full animate-pulse rounded-2xl bg-black/5 dark:bg-white/5" />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
-            {statCards.map((card) => (
-              <StatCard
-                key={card.title}
-                title={card.title}
-                value={card.value}
-                trend={card.trend}
-                icon={card.icon}
-                accentClass={card.accentClass}
-              />
-            ))}
-          </div>
-        )}
-      </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <article className="rounded-3xl border border-black/5 bg-white/80 p-5 dark:border-white/10 dark:bg-white/5">
-          <p className="text-xs font-semibold uppercase tracking-[0.17em] text-ink/50 dark:text-paper/55">Lost Items This Month</p>
-          <p className="mt-2 font-display text-3xl font-bold text-ink dark:text-paper">{summary?.lost_items_this_month ?? 0}</p>
-        </article>
-        <article className="rounded-3xl border border-black/5 bg-white/80 p-5 dark:border-white/10 dark:bg-white/5">
-          <p className="text-xs font-semibold uppercase tracking-[0.17em] text-ink/50 dark:text-paper/55">Found Items This Month</p>
-          <p className="mt-2 font-display text-3xl font-bold text-ink dark:text-paper">{summary?.found_items_this_month ?? 0}</p>
-        </article>
-        <article className="rounded-3xl border border-black/5 bg-white/80 p-5 dark:border-white/10 dark:bg-white/5">
-          <p className="text-xs font-semibold uppercase tracking-[0.17em] text-ink/50 dark:text-paper/55">Recovery Trends</p>
-          <p className="mt-2 font-display text-3xl font-bold text-ink dark:text-paper">{recoveryDelta > 0 ? '+' : ''}{recoveryDelta.toFixed(1)}%</p>
-        </article>
-      </section>
+      <ReportTrackerPanel reports={filteredReports} />
 
-      {/* Charts removed - dashboard simplified to only Lost and Found metrics per user request */}
-
-      <section className="space-y-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-ink/45 dark:text-paper/45">Recent items</p>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Active feed</h2>
-          </div>
-        </div>
-
-        <ItemGrid
-          loading={loading}
-          items={items}
-          skeletonCount={2}
-          emptyTitle="No recent items yet"
-          emptyDescription="New lost and found posts will appear here once the campus feed is active."
+      <div className="grid gap-8 xl:grid-cols-2">
+        <RecentLostItems
+          title="Recent lost items"
+          eyebrow="Recent lost items"
+          items={filteredLostItems}
+          emptyTitle="No recent lost items yet"
+          emptyDescription="Students have not posted any lost reports that match your current filter."
+          tone="lost"
         />
-      </section>
+        <RecentFoundItems
+          title="Recent found items"
+          eyebrow="Recent found items"
+          items={filteredFoundItems}
+          emptyTitle="No recent found items yet"
+          emptyDescription="As soon as someone posts a found item, it will appear here."
+          tone="found"
+        />
+      </div>
 
-      <section className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Potential matches</p>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Suggested lost and found pairs</h2>
-          </div>
-          <p className="max-w-2xl text-sm leading-6 text-ink/60 dark:text-paper/60">Matches are scored automatically from category, keywords, location, and date proximity.</p>
-        </div>
+      <NotificationPanel notifications={filteredNotifications} />
 
-        {matches.length ? (
-          <div className="grid gap-5">
-            {matches.map((match) => (
-              <MatchCard key={match.id} match={match} onCompare={setSelectedMatch} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-ink/60 dark:text-paper/60">No potential matches have been suggested yet.</p>
-        )}
-      </section>
+      <CommunityTrustSection summary={summary} />
 
       <CompareMatchModal
         open={Boolean(selectedMatch)}
         match={selectedMatch}
         onClose={() => setSelectedMatch(null)}
-        onConfirm={selectedMatch?.can_review ? () => handleMatchReview(selectedMatch.id, 'confirm') : undefined}
-        onReject={selectedMatch?.can_review ? () => handleMatchReview(selectedMatch.id, 'reject') : undefined}
+        onConfirm={selectedMatch?.can_review ? () => void handleMatchReview(selectedMatch.id, 'confirm') : undefined}
+        onReject={selectedMatch?.can_review ? () => void handleMatchReview(selectedMatch.id, 'reject') : undefined}
         busy={matchLoadingId === selectedMatch?.id}
       />
     </div>

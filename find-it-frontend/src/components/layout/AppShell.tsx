@@ -65,7 +65,7 @@ export default function AppShell() {
 
           <div className="hidden items-center gap-2 lg:flex">
             <NavLink to="/dashboard" className={navClass}>
-              Dashboard
+              Home
             </NavLink>
             <NavLink to="/items/lost" className={navClass}>
               Lost Items
@@ -74,7 +74,7 @@ export default function AppShell() {
               Found Items
             </NavLink>
             <NavLink to="/items/new" className={() => 'rounded-full bg-moss px-4 py-2 text-sm font-medium text-white shadow-[0_10px_24px_rgba(31,86,74,0.2)] transition hover:opacity-90 dark:bg-paper dark:text-ink'}>
-              Post item
+              Report Item
             </NavLink>
             <NotificationBell />
             <ThemeToggle theme={theme} onToggle={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))} />
@@ -120,7 +120,7 @@ export default function AppShell() {
             </div>
             <div className="grid gap-2 rounded-[1.5rem] border border-black/5 bg-white/80 p-3 shadow-glow backdrop-blur dark:border-white/10 dark:bg-white/5">
             <NavLink to="/dashboard" className={navClass} onClick={() => setMenuOpen(false)}>
-              Dashboard
+              Home
             </NavLink>
             <NavLink to="/items/lost" className={navClass} onClick={() => setMenuOpen(false)}>
               Lost Items
@@ -129,7 +129,13 @@ export default function AppShell() {
               Found Items
             </NavLink>
             <NavLink to="/items/new" className={navClass} onClick={() => setMenuOpen(false)}>
-              Post item
+              Report Item
+            </NavLink>
+            <NavLink to="/dashboard#my-reports" className={navClass} onClick={() => setMenuOpen(false)}>
+              My Reports
+            </NavLink>
+            <NavLink to="/profile" className={navClass} onClick={() => setMenuOpen(false)}>
+              Profile
             </NavLink>
             <NavLink to="/notifications" className={navClass} onClick={() => setMenuOpen(false)}>
               Notifications
@@ -149,12 +155,30 @@ export default function AppShell() {
         <Outlet />
       </main>
 
-      <Link
-        to="/items/new"
-        className="fixed bottom-4 right-4 z-30 inline-flex items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(49,91,79,0.3)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(49,91,79,0.36)] lg:hidden"
-      >
-        Post Item
-      </Link>
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-black/5 bg-[color:var(--app-bg)]/95 backdrop-blur-lg dark:border-white/10 dark:bg-[color:var(--app-bg)]/85 lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2">
+          <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-ink' : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-ink/70') }>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13l9-9 9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span>Home</span>
+          </NavLink>
+          <NavLink to="/items/lost" className={({ isActive }) => (isActive ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-ink' : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-ink/70') }>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2v20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span>Lost</span>
+          </NavLink>
+          <NavLink to="/items/new" className={({ isActive }) => (isActive ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-white bg-moss rounded-xl px-3 py-2' : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-white bg-moss rounded-xl px-3 py-2') }>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span>Report</span>
+          </NavLink>
+          <NavLink to="/items/found" className={({ isActive }) => (isActive ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-ink' : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-ink/70') }>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/></svg>
+            <span>Found</span>
+          </NavLink>
+          <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-ink' : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-ink/70') }>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span>Notifs</span>
+          </NavLink>
+        </div>
+      </nav>
     </div>
   )
 }

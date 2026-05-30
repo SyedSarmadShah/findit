@@ -5,11 +5,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#07111f',
-        paper: '#f4efe6',
-        sand: '#e8dcc8',
-        moss: '#315b4f',
-        rust: '#c45b2a',
+        ink: '#0F172A',
+        paper: '#ffffff',
+        background: '#F8FAFC',
+        secondary: '#14532D',
+        accent: '#22C55E',
       },
       boxShadow: {
         glow: '0 18px 60px rgba(7, 17, 31, 0.16)',
