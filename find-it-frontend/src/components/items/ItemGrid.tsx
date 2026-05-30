@@ -20,9 +20,10 @@ type ItemGridProps = {
   skeletonCount?: number
   emptyTitle: string
   emptyDescription: string
+  onClaimItem?: (item: ItemGridItem) => void
 }
 
-export default function ItemGrid({ items = [], loading = false, skeletonCount = 6, emptyTitle, emptyDescription }: ItemGridProps) {
+export default function ItemGrid({ items = [], loading = false, skeletonCount = 6, emptyTitle, emptyDescription, onClaimItem }: ItemGridProps) {
   if (loading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -56,6 +57,7 @@ export default function ItemGrid({ items = [], loading = false, skeletonCount = 
           date={item.date}
           status={item.status}
           imageUrl={item.image_url ?? item.image ?? null}
+          onClaim={item.item_type === 'found' && onClaimItem ? () => onClaimItem(item) : undefined}
         />
       ))}
     </div>

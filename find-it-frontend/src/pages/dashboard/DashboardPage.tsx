@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ItemGrid from '../../components/items/ItemGrid'
-import { listItems } from '../../services/itemService'
+import { approveClaim, listClaimHistory, listClaimReviewQueue, listItems, listNotifications, rejectClaim } from '../../services/itemService'
+import { useToast } from '../../components/ui/ToastProvider'
+
+function claimStatusLabel(status: string) {
+  return status.charAt(0).toUpperCase() + status.slice(1)
+}
 
 export default function DashboardPage() {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [claimHistory, setClaimHistory] = useState<any[]>([])
+  const [reviewQueue, setReviewQueue] = useState<any[]>([])
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [reviewLoadingId, setReviewLoadingId] = useState<number | null>(null)
+  const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({})
+  const { showToast } = useToast()
 
   useEffect(() => {
     let cancelled = false
@@ -13,8 +24,24 @@ export default function DashboardPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const data = await listItems({})
-        if (!cancelled) setItems(data.slice(0, 4))
+        const [itemData, historyData, reviewData, notificationData] = await Promise.all([
+          listItems({}),
+          listClaimHistory(),
+          listClaimReviewQueue(),
+          listNotifications(),
+        ])
+        if (!cancelled) {
+          setItems(itemData.slice(0, 4))
+          setClaimHistory(historyData.slice(0, 4))
+          setReviewQueue(reviewData.slice(0, 4))
+          setNotifications(notificationData.slice(0, 4))
+          setReviewNotes(
+            reviewData.slice(0, 4).reduce<Record<number, string>>((accumulator, claim) => {
+              accumulator[claim.id] = claim.verification_notes || ''
+              return accumulator
+            }, {}),
+          )
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -25,6 +52,38 @@ export default function DashboardPage() {
       cancelled = true
     }
   }, [])
+
+  const handleReview = async (claimId: number, action: 'approve' | 'reject') => {
+    setReviewLoadingId(claimId)
+    try {
+      const notes = reviewNotes[claimId]?.trim()
+      if (action === 'approve') {
+        await approveClaim(claimId, notes ? { verification_notes: notes } : undefined)
+        showToast('Claim approved and item status updated.', 'success')
+      } else {
+        await rejectClaim(claimId, notes ? { verification_notes: notes } : undefined)
+        showToast('Claim rejected and claimant notified.', 'info')
+      }
+      const [historyData, reviewData, notificationData] = await Promise.all([
+        listClaimHistory(),
+        listClaimReviewQueue(),
+        listNotifications(),
+      ])
+      setClaimHistory(historyData.slice(0, 4))
+      setReviewQueue(reviewData.slice(0, 4))
+      setNotifications(notificationData.slice(0, 4))
+      setReviewNotes(
+        reviewData.slice(0, 4).reduce<Record<number, string>>((accumulator, claim) => {
+          accumulator[claim.id] = claim.verification_notes || ''
+          return accumulator
+        }, {}),
+      )
+    } catch {
+      showToast('Unable to update claim status right now.', 'error')
+    } finally {
+      setReviewLoadingId(null)
+    }
+  }
 
   return (
     <div className="space-y-8 pb-10">
@@ -77,6 +136,137 @@ export default function DashboardPage() {
           emptyTitle="No recent items yet"
           emptyDescription="New lost and found posts will appear here once the campus feed is active."
         />
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Claim history</p>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Your submitted claims</h2>
+          </div>
+          {claimHistory.length ? (
+            <div className="grid gap-3">
+              {claimHistory.map((claim) => (
+                <article key={claim.id} className="rounded-2xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-ink dark:text-paper">{claim.item_title || `Item #${claim.item}`}</p>
+                      <p className="text-sm text-ink/60 dark:text-paper/60">Submitted {new Date(claim.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink/70 dark:bg-white/10 dark:text-paper/75">
+                      {claimStatusLabel(claim.status)}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm text-ink/65 dark:text-paper/65">
+                    <p><span className="font-semibold text-ink dark:text-paper">Brand:</span> {claim.answers?.brand}</p>
+                    <p><span className="font-semibold text-ink dark:text-paper">Marks:</span> {claim.answers?.unique_marks}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-ink/60 dark:text-paper/60">No claims submitted yet.</p>
+          )}
+        </div>
+
+        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rust dark:text-paper/45">Finder inbox</p>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Review claim requests</h2>
+          </div>
+          {reviewQueue.length ? (
+            <div className="grid gap-3">
+              {reviewQueue.map((claim) => (
+                <article key={claim.id} className="rounded-2xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-ink dark:text-paper">{claim.item_title || `Item #${claim.item}`}</p>
+                      <p className="text-sm text-ink/60 dark:text-paper/60">Claimant {claim.claimant_email}</p>
+                    </div>
+                    <span className="rounded-full bg-moss/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-moss dark:bg-moss/20 dark:text-paper">
+                      {claimStatusLabel(claim.status)}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm text-ink/65 dark:text-paper/65">
+                    <p><span className="font-semibold text-ink dark:text-paper">Brand:</span> {claim.answers?.brand}</p>
+                    <p><span className="font-semibold text-ink dark:text-paper">Marks:</span> {claim.answers?.unique_marks}</p>
+                    <p><span className="font-semibold text-ink dark:text-paper">Contents:</span> {claim.answers?.item_contents}</p>
+                    <p><span className="font-semibold text-ink dark:text-paper">Proof:</span> {claim.answers?.additional_details}</p>
+                  </div>
+                  <label className="mt-4 grid gap-2 text-sm font-medium text-ink dark:text-paper">
+                    Verification notes
+                    <textarea
+                      value={reviewNotes[claim.id] ?? claim.verification_notes ?? ''}
+                      onChange={(event) => setReviewNotes((current) => ({ ...current, [claim.id]: event.target.value }))}
+                      className="min-h-[92px] rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+                      placeholder="Optional finder/admin notes"
+                    />
+                  </label>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={reviewLoadingId === claim.id}
+                      onClick={() => void handleReview(claim.id, 'approve')}
+                      className="rounded-full bg-moss px-4 py-2 text-sm font-semibold text-paper transition hover:opacity-90 disabled:opacity-60"
+                    >
+                      {reviewLoadingId === claim.id ? 'Updating...' : 'Approve'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={reviewLoadingId === claim.id}
+                      onClick={() => void handleReview(claim.id, 'reject')}
+                      className="rounded-full bg-rust px-4 py-2 text-sm font-semibold text-paper transition hover:opacity-90 disabled:opacity-60"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-ink/60 dark:text-paper/60">No claim requests are waiting for review.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-navy dark:text-paper/45">Notifications</p>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Claim updates</h2>
+          </div>
+          {notifications.length ? (
+            <div className="grid gap-3">
+              {notifications.map((notification) => (
+                <article key={notification.id} className="rounded-2xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-ink dark:text-paper">{notification.title}</p>
+                      <p className="mt-1 text-sm text-ink/65 dark:text-paper/65">{notification.body}</p>
+                    </div>
+                    <span className="rounded-full bg-black/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/60 dark:bg-white/10 dark:text-paper/70">
+                      {notification.kind.replace('_', ' ')}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-ink/60 dark:text-paper/60">No notifications yet.</p>
+          )}
+        </div>
+
+        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Claim workflow</p>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Secure recovery</h2>
+          </div>
+          <div className="grid gap-3 text-sm leading-6 text-ink/70 dark:text-paper/70">
+            <div className="rounded-2xl bg-black/5 p-4 dark:bg-white/5">Authenticated users submit a claim with brand, marks, contents, and proof details.</div>
+            <div className="rounded-2xl bg-black/5 p-4 dark:bg-white/5">The finder reviews the answer set, then approves or rejects the request.</div>
+            <div className="rounded-2xl bg-black/5 p-4 dark:bg-white/5">Claim history, notifications, and item status changes stay synced automatically.</div>
+          </div>
+        </div>
       </section>
     </div>
   )

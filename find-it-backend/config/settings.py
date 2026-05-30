@@ -17,9 +17,12 @@ DEBUG = env_bool("DJANGO_DEBUG", True)
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "testserver,127.0.0.1,localhost").split(",")
     if host.strip()
 ]
+
+if "testserver" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("testserver")
 
 INSTALLED_APPS = [
     "django.contrib.admin",

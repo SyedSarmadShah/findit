@@ -21,12 +21,34 @@ export type Item = {
 export type ItemClaim = {
   id: number
   item: number
+  item_title?: string
+  item_owner?: number
   claimant: number
   claimant_email: string
-  message: string
-  status: 'pending' | 'approved' | 'rejected'
+  finder: number
+  finder_email: string
+  answers: {
+    brand: string
+    unique_marks: string
+    item_contents: string
+    additional_details: string
+  }
+  verification_notes?: string
+  status: 'pending' | 'approved' | 'rejected' | 'completed'
   created_at: string
   updated_at: string
+  can_review?: boolean
+}
+
+export type Notification = {
+  id: number
+  recipient: number
+  kind: 'claim_submitted' | 'claim_approved' | 'claim_rejected'
+  title: string
+  body: string
+  claim?: number | null
+  is_read: boolean
+  created_at: string
 }
 
 export type ItemReport = {
@@ -76,12 +98,45 @@ export async function deleteItem(id: number) {
   return data
 }
 
-export async function createClaim(payload: { item: number; message: string }) {
+export async function createClaim(payload: {
+  item: number
+  answers: {
+    brand: string
+    unique_marks: string
+    item_contents: string
+    additional_details: string
+  }
+}) {
   const { data } = await api.post<ItemClaim>('/items/claims/', payload)
+  return data
+}
+
+export async function listClaimHistory() {
+  const { data } = await api.get<ItemClaim[]>('/items/claims/history/')
+  return data
+}
+
+export async function listClaimReviewQueue() {
+  const { data } = await api.get<ItemClaim[]>('/items/claims/review-queue/')
+  return data
+}
+
+export async function approveClaim(id: number, payload?: { verification_notes?: string }) {
+  const { data } = await api.post<ItemClaim>(`/items/claims/${id}/approve/`, payload ?? {})
+  return data
+}
+
+export async function rejectClaim(id: number, payload?: { verification_notes?: string }) {
+  const { data } = await api.post<ItemClaim>(`/items/claims/${id}/reject/`, payload ?? {})
   return data
 }
 
 export async function reportItem(payload: { item: number; reason: string; details: string }) {
   const { data } = await api.post<ItemReport>('/items/reports/', payload)
+  return data
+}
+
+export async function listNotifications() {
+  const { data } = await api.get<Notification[]>('/messaging/notifications/')
   return data
 }

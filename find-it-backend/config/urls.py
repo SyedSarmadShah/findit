@@ -9,4 +9,7 @@ urlpatterns = [
     path("api/auth/", include("apps.authentication.urls")),
     path("api/items/", include("apps.items.urls")),
     path("api/messaging/", include("apps.messaging.urls")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) if settings.DEBUG else []
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

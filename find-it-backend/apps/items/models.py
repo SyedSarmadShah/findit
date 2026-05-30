@@ -40,15 +40,19 @@ class ItemClaim(models.Model):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+    COMPLETED = "completed"
     STATUS_CHOICES = [
         (PENDING, "Pending"),
         (APPROVED, "Approved"),
         (REJECTED, "Rejected"),
+        (COMPLETED, "Completed"),
     ]
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="claims")
     claimant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="claims")
-    message = models.TextField(blank=True)
+    finder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="finder_claims")
+    answers = models.JSONField(default=dict)
+    verification_notes = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

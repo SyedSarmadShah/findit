@@ -10,6 +10,8 @@ type ItemCardProps = {
   date: string
   status: string
   imageUrl?: string | null
+  onClaim?: () => void
+  showActions?: boolean
 }
 
 const PLACEHOLDER_IMAGE =
@@ -37,10 +39,11 @@ function formatDate(dateValue: string) {
   }).format(parsedDate)
 }
 
-export default function ItemCard({ id, itemType = 'lost', title, description, category, location, date, status, imageUrl }: ItemCardProps) {
+export default function ItemCard({ id, itemType = 'lost', title, description, category, location, date, status, imageUrl, onClaim, showActions = true }: ItemCardProps) {
   const statusLabel = status.charAt(0).toUpperCase() + status.slice(1)
   const itemTypeLabel = itemType === 'found' ? 'Found' : 'Lost'
   const resolvedImage = imageUrl || PLACEHOLDER_IMAGE
+  const detailsHref = `/items/${id}`
 
   return (
     <article className="group overflow-hidden rounded-[1.75rem] border border-black/5 bg-white/80 shadow-[0_18px_50px_rgba(11,23,39,0.08)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(11,23,39,0.16)] dark:border-white/10 dark:bg-white/5">
@@ -54,6 +57,14 @@ export default function ItemCard({ id, itemType = 'lost', title, description, ca
             {statusLabel}
           </span>
         </div>
+        {showActions ? (
+          <Link
+            to={detailsHref}
+            className="absolute right-4 top-4 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink shadow-[0_10px_24px_rgba(11,23,39,0.15)] transition duration-200 hover:-translate-y-0.5 hover:bg-paper focus:outline-none focus:ring-2 focus:ring-moss/40 dark:border-white/15 dark:bg-surface-strong dark:text-paper"
+          >
+            View details
+          </Link>
+        ) : null}
       </div>
 
       <div className="flex h-full flex-col gap-4 p-5 sm:p-6">
@@ -67,20 +78,25 @@ export default function ItemCard({ id, itemType = 'lost', title, description, ca
           <p className="text-sm leading-6 text-ink/70 dark:text-paper/70">{description}</p>
         </div>
 
-        <div className="mt-auto flex flex-wrap gap-3 pt-2">
-          <Link
-            to={`/items/${id}`}
-            className="inline-flex items-center justify-center rounded-full bg-navy px-5 py-3 text-sm font-semibold text-paper transition duration-200 hover:-translate-y-0.5 hover:bg-navy/95 hover:shadow-lg hover:shadow-navy/10"
-          >
-            View Details
-          </Link>
-          <Link
-            to={`/items/${id}#claim-item`}
-            className="inline-flex items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-paper transition duration-200 hover:-translate-y-0.5 hover:bg-moss/95 hover:shadow-lg hover:shadow-moss/10"
-          >
-            Claim Item
-          </Link>
-        </div>
+        {showActions ? (
+          <div className="mt-auto flex flex-wrap gap-3 pt-2">
+            <Link
+              to={detailsHref}
+              className="inline-flex items-center justify-center rounded-full border border-navy/15 bg-navy px-5 py-3 text-sm font-semibold text-paper shadow-[0_12px_28px_rgba(8,18,35,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-navy/95 hover:shadow-[0_18px_34px_rgba(8,18,35,0.24)]"
+            >
+              View Details
+            </Link>
+            {itemType === 'found' && onClaim ? (
+              <button
+                type="button"
+                onClick={onClaim}
+                className="inline-flex items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-paper transition duration-200 hover:-translate-y-0.5 hover:bg-moss/95 hover:shadow-lg hover:shadow-moss/10"
+              >
+                Claim Item
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </article>
   )

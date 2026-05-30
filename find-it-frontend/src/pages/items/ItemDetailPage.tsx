@@ -2,18 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import ItemCard from '../../components/items/ItemCard'
+import ClaimRequestModal from '../../components/items/ClaimRequestModal'
 import { createClaim, getItem, reportItem } from '../../services/itemService'
+import { useToast } from '../../components/ui/ToastProvider'
 
 export default function ItemDetailPage() {
   const { id } = useParams()
   const { user } = useAuth()
+  const { showToast } = useToast()
   const [item, setItem] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const [claimMessage, setClaimMessage] = useState('')
-  const [isClaiming, setIsClaiming] = useState(false)
-  const [claimSuccess, setClaimSuccess] = useState('')
+  const [claimOpen, setClaimOpen] = useState(false)
 
   const [reportReason, setReportReason] = useState('')
   const [reportDetails, setReportDetails] = useState('')
@@ -60,23 +61,23 @@ export default function ItemDetailPage() {
     return item.owner === user.id
   }, [item, user])
 
-  const canClaim = Boolean(item && item.status !== 'resolved' && !isOwnItem)
+  const canClaim = Boolean(item && item.item_type === 'found' && item.status !== 'resolved' && !isOwnItem)
 
-  const handleClaim = async () => {
-    if (!item || !claimMessage.trim()) return
-
-    setIsClaiming(true)
-    setClaimSuccess('')
-    setError('')
+  const handleClaim = async (answers: {
+    brand: string
+    unique_marks: string
+    item_contents: string
+    additional_details: string
+  }) => {
+    if (!item) return
 
     try {
-      await createClaim({ item: item.id, message: claimMessage.trim() })
-      setClaimMessage('')
-      setClaimSuccess('Claim submitted successfully.')
+      await createClaim({ item: item.id, answers })
+      setClaimOpen(false)
+      showToast('Claim submitted. The finder will review it shortly.', 'success')
     } catch {
-      setError('Unable to submit claim. You may have already claimed this item.')
-    } finally {
-      setIsClaiming(false)
+      showToast('Unable to submit claim. You may have already claimed this item.', 'error')
+      throw new Error('claim failed')
     }
   }
 
@@ -92,8 +93,10 @@ export default function ItemDetailPage() {
       setReportReason('')
       setReportDetails('')
       setReportSuccess('Report submitted. Admin review can take some time.')
+      showToast('Report submitted. Admin review can take some time.', 'success')
     } catch {
       setError('Unable to submit report right now.')
+      showToast('Unable to submit report right now.', 'error')
     } finally {
       setIsReporting(false)
     }
@@ -121,6 +124,9 @@ export default function ItemDetailPage() {
       <header className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-ink/45">Item detail</p>
         <h1 className="font-display text-4xl font-bold tracking-tight">Review and take action</h1>
+        <p className="max-w-3xl text-sm leading-6 text-ink/65 dark:text-paper/65">
+          The card below is just a preview. To claim a found item, use the Claim button in the section below to open the form and submit your proof.
+        </p>
       </header>
 
       <ItemCard
@@ -133,37 +139,42 @@ export default function ItemDetailPage() {
         date={item.date}
         status={item.status}
         imageUrl={item.image_url ?? item.image ?? undefined}
+        onClaim={canClaim ? () => setClaimOpen(true) : undefined}
+        showActions={false}
       />
 
       <section id="claim-item" className="grid gap-4 rounded-2xl border border-black/5 bg-white/70 p-5 dark:border-white/10 dark:bg-white/5">
         <h2 className="font-display text-2xl font-bold">Claim this item</h2>
         <p className="text-sm text-ink/65 dark:text-paper/65">
-          Send a message with identifying details (brand, color, content) so the owner can verify your claim.
+          Share proof points such as the brand, unique marks, and contents so the finder can verify ownership.
         </p>
 
         {!canClaim ? (
-          <div className="rounded-xl bg-black/5 p-3 text-sm dark:bg-white/5">You cannot claim this item.</div>
+          <div className="rounded-xl bg-black/5 p-3 text-sm leading-6 dark:bg-white/5">
+            This item cannot be claimed from this account. If you want to test the claim flow, open a found item while signed in as a different user.
+          </div>
         ) : (
-          <>
-            <textarea
-              value={claimMessage}
-              onChange={(event) => setClaimMessage(event.target.value)}
-              placeholder="Write your claim message"
-              className="min-h-[110px] rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong"
-            />
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              disabled={isClaiming || !claimMessage.trim()}
-              onClick={() => void handleClaim()}
-              className="w-fit rounded-full bg-moss px-5 py-2 text-sm font-medium text-paper transition hover:opacity-90 disabled:opacity-60"
+              onClick={() => setClaimOpen(true)}
+              className="w-fit rounded-full bg-moss px-5 py-2 text-sm font-semibold text-paper shadow-[0_12px_24px_rgba(31,86,74,0.16)] transition hover:-translate-y-0.5 hover:opacity-95"
             >
-              {isClaiming ? 'Submitting claim...' : 'Submit claim'}
+              Claim Item
             </button>
-          </>
+            <span className="self-center text-sm text-ink/55 dark:text-paper/55">This opens the claim form with brand, marks, contents, and proof details.</span>
+          </div>
         )}
 
-        {claimSuccess ? <p className="text-sm text-moss">{claimSuccess}</p> : null}
+        <p className="text-sm text-ink/55 dark:text-paper/55">The request will be stored in your claim history and sent to the finder for review.</p>
       </section>
+
+      <ClaimRequestModal
+        open={claimOpen}
+        itemTitle={item.title}
+        onClose={() => setClaimOpen(false)}
+        onSubmit={handleClaim}
+      />
 
       <section className="grid gap-4 rounded-2xl border border-black/5 bg-white/70 p-5 dark:border-white/10 dark:bg-white/5">
         <h2 className="font-display text-2xl font-bold">Report this post</h2>

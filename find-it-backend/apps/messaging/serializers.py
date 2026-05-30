@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Conversation, Message
+from .models import Conversation, Message, Notification
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -30,3 +30,10 @@ class ConversationSerializer(serializers.ModelSerializer):
         conversation = Conversation.objects.create(created_by=request.user, **validated_data)
         conversation.participants.add(request.user, *participants)
         return conversation
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ("id", "recipient", "kind", "title", "body", "claim", "is_read", "created_at")
+        read_only_fields = fields

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Conversation, Message
+from .models import Conversation, Message, Notification
 
 
 @admin.register(Conversation)
@@ -11,3 +11,9 @@ class ConversationAdmin(admin.ModelAdmin):
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
     list_display = ("conversation", "sender", "is_read", "created_at")
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("recipient", "kind", "is_read", "created_at")
+    list_filter = ("kind", "is_read", "created_at")

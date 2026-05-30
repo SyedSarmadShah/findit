@@ -22,3 +22,26 @@ class Message(models.Model):
 
     class Meta:
         ordering = ["created_at"]
+
+
+class Notification(models.Model):
+    CLAIM_SUBMITTED = "claim_submitted"
+    CLAIM_APPROVED = "claim_approved"
+    CLAIM_REJECTED = "claim_rejected"
+
+    KIND_CHOICES = [
+        (CLAIM_SUBMITTED, "Claim submitted"),
+        (CLAIM_APPROVED, "Claim approved"),
+        (CLAIM_REJECTED, "Claim rejected"),
+    ]
+
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
+    kind = models.CharField(max_length=40, choices=KIND_CHOICES)
+    title = models.CharField(max_length=120)
+    body = models.TextField()
+    claim = models.ForeignKey("items.ItemClaim", on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

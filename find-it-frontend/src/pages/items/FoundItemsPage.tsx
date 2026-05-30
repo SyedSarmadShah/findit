@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import ItemGrid from '../../components/items/ItemGrid'
+import ClaimRequestModal from '../../components/items/ClaimRequestModal'
 import SearchFilters from '../../components/ui/SearchFilters'
-import { listItems } from '../../services/itemService'
+import { createClaim, listItems } from '../../services/itemService'
+import { useToast } from '../../components/ui/ToastProvider'
 
 export default function FoundItemsPage() {
   const [items, setItems] = useState<any[]>([])
@@ -9,6 +11,8 @@ export default function FoundItemsPage() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('')
   const [status, setStatus] = useState('')
+  const [selectedItem, setSelectedItem] = useState<any | null>(null)
+  const { showToast } = useToast()
 
   const filters = useMemo(
     () => ({
@@ -43,6 +47,18 @@ export default function FoundItemsPage() {
     setQuery('')
     setCategory('')
     setStatus('')
+  }
+
+  const handleClaimSubmit = async (answers: {
+    brand: string
+    unique_marks: string
+    item_contents: string
+    additional_details: string
+  }) => {
+    if (!selectedItem) return
+    await createClaim({ item: selectedItem.id, answers })
+    setSelectedItem(null)
+    showToast('Claim submitted. The finder has been notified.', 'success')
   }
 
   return (
@@ -87,6 +103,14 @@ export default function FoundItemsPage() {
         items={items}
         emptyTitle="No found items found"
         emptyDescription="Try adjusting your search, category, or status filters."
+        onClaimItem={(item) => setSelectedItem(item)}
+      />
+
+      <ClaimRequestModal
+        open={Boolean(selectedItem)}
+        itemTitle={selectedItem?.title ?? ''}
+        onClose={() => setSelectedItem(null)}
+        onSubmit={handleClaimSubmit}
       />
     </div>
   )
