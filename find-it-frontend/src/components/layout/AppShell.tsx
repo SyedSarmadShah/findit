@@ -75,7 +75,7 @@ export default function AppShell() {
             <NavLink to="/items/found" className={navClass}>
               Found Items
             </NavLink>
-            <NavLink to="/items/new" className={() => 'rounded-full bg-moss px-4 py-2 text-sm font-medium text-paper transition hover:opacity-90 dark:bg-paper dark:text-ink'}>
+            <NavLink to="/items/new" className={() => 'rounded-full bg-moss px-4 py-2 text-sm font-medium text-white shadow-[0_10px_24px_rgba(31,86,74,0.2)] transition hover:opacity-90 dark:bg-paper dark:text-ink'}>
               Post item
             </NavLink>
             <NotificationBell />
@@ -153,7 +153,7 @@ export default function AppShell() {
 
       <Link
         to="/items/new"
-        className="fixed bottom-4 right-4 z-30 inline-flex items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-paper shadow-[0_16px_36px_rgba(49,91,79,0.3)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(49,91,79,0.36)] lg:hidden"
+        className="fixed bottom-4 right-4 z-30 inline-flex items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_36px_rgba(49,91,79,0.3)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(49,91,79,0.36)] lg:hidden"
       >
         Post Item
       </Link>

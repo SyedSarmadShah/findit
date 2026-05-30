@@ -162,13 +162,13 @@ export default function DashboardPage() {
             <h2 className="mt-2 font-display text-2xl font-bold">Start here</h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Link to="/items/new" className="rounded-2xl bg-white/10 p-4 dark:bg-ink/5 hover:opacity-95">
-              <p className="text-sm font-medium">Lost item</p>
-              <p className="mt-1 text-sm text-paper/70 dark:text-ink/60">Post a missing item report.</p>
+            <Link to="/items/new" className="rounded-2xl bg-white/10 p-4 text-paper dark:bg-ink/5 hover:opacity-95">
+              <p className="text-sm font-semibold text-white dark:text-ink">Lost item</p>
+              <p className="mt-1 text-sm text-paper/90 dark:text-ink/70">Post a missing item report.</p>
             </Link>
-            <Link to="/items/new" className="rounded-2xl bg-white/10 p-4 dark:bg-ink/5 hover:opacity-95">
-              <p className="text-sm font-medium">Found item</p>
-              <p className="mt-1 text-sm text-paper/70 dark:text-ink/60">Log an item someone may claim.</p>
+            <Link to="/items/new" className="rounded-2xl bg-white/10 p-4 text-paper dark:bg-ink/5 hover:opacity-95">
+              <p className="text-sm font-semibold text-white dark:text-ink">Found item</p>
+              <p className="mt-1 text-sm text-paper/90 dark:text-ink/70">Log an item someone may claim.</p>
             </Link>
           </div>
         </div>

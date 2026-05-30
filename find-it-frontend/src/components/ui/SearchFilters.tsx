@@ -51,7 +51,7 @@ export default function SearchFilters({
             value={query}
             onChange={handleChange(onQueryChange)}
             placeholder="Search title, location, or description"
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35 sm:text-sm"
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base text-ink outline-none transition placeholder:text-ink/55 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-[color:var(--app-surface-strong)] dark:text-white dark:placeholder:text-white/65 sm:text-sm"
           />
         </label>
 
@@ -60,7 +60,7 @@ export default function SearchFilters({
           <select
             value={category}
             onChange={handleChange(onCategoryChange)}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper sm:text-sm"
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base text-ink outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-[color:var(--app-surface-strong)] dark:text-white sm:text-sm"
           >
             <option value="">All categories</option>
             <option value="Bags">Bags</option>
@@ -76,7 +76,7 @@ export default function SearchFilters({
           <select
             value={status}
             onChange={handleChange(onStatusChange)}
-            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper sm:text-sm"
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base text-ink outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-[color:var(--app-surface-strong)] dark:text-white sm:text-sm"
           >
             <option value="">Any status</option>
             <option value="open">Open</option>

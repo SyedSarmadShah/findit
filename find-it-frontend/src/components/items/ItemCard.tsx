@@ -24,8 +24,8 @@ const statusTone = {
 }
 
 const itemTypeTone = {
-  lost: 'bg-rust/15 text-rust dark:bg-rust/25 dark:text-paper',
-  found: 'bg-moss/15 text-moss dark:bg-moss/25 dark:text-paper',
+  lost: 'bg-red-600 text-white shadow-[0_8px_20px_rgba(220,38,38,0.35)]',
+  found: 'bg-green-600 text-white shadow-[0_8px_20px_rgba(22,163,74,0.35)]',
 }
 
 function formatDate(dateValue: string) {
