@@ -1,6 +1,11 @@
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Q
-from rest_framework import permissions, status, viewsets
+from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
+from django.utils import timezone
+from rest_framework import permissions, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -12,6 +17,9 @@ from .matching import create_matches_for_item
 from .models import Item, ItemClaim, ItemMatch, ItemReport
 from .serializers import ItemClaimSerializer, ItemMatchSerializer, ItemReportSerializer, ItemSerializer
 from apps.messaging.services import notify_claim_received, notify_claim_reviewed, notify_item_returned
+
+
+User = get_user_model()
 
 
 class ItemViewSet(viewsets.ModelViewSet):
@@ -42,6 +50,148 @@ class ItemViewSet(viewsets.ModelViewSet):
         if instance.owner != self.request.user and not self.request.user.is_staff:
             raise PermissionDenied("You cannot delete this item.")
         instance.delete()
+
+    @action(detail=False, methods=["get"], url_path="dashboard-analytics", permission_classes=[permissions.IsAuthenticated])
+    def dashboard_analytics(self, request):
+        now = timezone.now()
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        previous_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+
+        item_aggregate = Item.objects.aggregate(
+            total_posts=Count("id"),
+            total_lost_items=Count("id", filter=Q(item_type=Item.LOST)),
+            total_found_items=Count("id", filter=Q(item_type=Item.FOUND)),
+            open_lost_reports=Count("id", filter=Q(item_type=Item.LOST, status=Item.OPEN)),
+            open_found_reports=Count("id", filter=Q(item_type=Item.FOUND, status=Item.OPEN)),
+            active_reports=Count("id", filter=Q(status__in=[Item.OPEN, Item.MATCHED])),
+            resolved_reports=Count("id", filter=Q(status=Item.RESOLVED)),
+            lost_items_this_month=Count("id", filter=Q(item_type=Item.LOST, created_at__gte=current_month_start)),
+            found_items_this_month=Count("id", filter=Q(item_type=Item.FOUND, created_at__gte=current_month_start)),
+            lost_items_previous_month=Count(
+                "id",
+                filter=Q(item_type=Item.LOST, created_at__gte=previous_month_start, created_at__lt=current_month_start),
+            ),
+            found_items_previous_month=Count(
+                "id",
+                filter=Q(item_type=Item.FOUND, created_at__gte=previous_month_start, created_at__lt=current_month_start),
+            ),
+        )
+
+        claim_aggregate = ItemClaim.objects.aggregate(
+            active_claims=Count("id", filter=Q(status__in=[ItemClaim.PENDING, ItemClaim.APPROVED])),
+            returned_items=Count("id", filter=Q(status=ItemClaim.COMPLETED)),
+            completed_this_month=Count("id", filter=Q(status=ItemClaim.COMPLETED, updated_at__gte=current_month_start)),
+            completed_previous_month=Count(
+                "id",
+                filter=Q(
+                    status=ItemClaim.COMPLETED,
+                    updated_at__gte=previous_month_start,
+                    updated_at__lt=current_month_start,
+                ),
+            ),
+        )
+
+        total_matches = ItemMatch.objects.count()
+        total_users = User.objects.count()
+
+        total_lost_items = item_aggregate["total_lost_items"] or 0
+        returned_items = claim_aggregate["returned_items"] or 0
+        recovery_success_rate = (returned_items / total_lost_items * 100) if total_lost_items else 0
+
+        def trend(current, previous):
+            if previous == 0:
+                return 100.0 if current > 0 else 0.0
+            return ((current - previous) / previous) * 100
+
+        monthly_window_start = (current_month_start - timedelta(days=210)).replace(day=1)
+        monthly_rows = (
+            Item.objects.filter(created_at__gte=monthly_window_start)
+            .annotate(month=TruncMonth("created_at"))
+            .values("month")
+            .annotate(
+                lost=Count("id", filter=Q(item_type=Item.LOST)),
+                found=Count("id", filter=Q(item_type=Item.FOUND)),
+            )
+            .order_by("month")
+        )
+
+        completed_monthly_rows = (
+            ItemClaim.objects.filter(status=ItemClaim.COMPLETED, updated_at__gte=monthly_window_start)
+            .annotate(month=TruncMonth("updated_at"))
+            .values("month")
+            .annotate(returned=Count("id"))
+            .order_by("month")
+        )
+        completed_by_month = {row["month"]: row["returned"] for row in completed_monthly_rows}
+
+        monthly_recovery_trend = [
+            {
+                "month": row["month"].strftime("%b %Y"),
+                "lost": row["lost"],
+                "found": row["found"],
+                "returned": completed_by_month.get(row["month"], 0),
+            }
+            for row in monthly_rows
+        ]
+
+        category_distribution = list(
+            Item.objects.values("category")
+            .annotate(value=Count("id"))
+            .order_by("-value")[:8]
+        )
+        for row in category_distribution:
+            row["name"] = row.pop("category") or "Uncategorized"
+
+        payload = {
+            "summary": {
+                "total_users": total_users,
+                "total_posts": item_aggregate["total_posts"] or 0,
+                "total_lost_items": total_lost_items,
+                "total_found_items": item_aggregate["total_found_items"] or 0,
+                "items_successfully_returned": returned_items,
+                "active_claims": claim_aggregate["active_claims"] or 0,
+                "open_lost_reports": item_aggregate["open_lost_reports"] or 0,
+                "open_found_reports": item_aggregate["open_found_reports"] or 0,
+                "active_reports": item_aggregate["active_reports"] or 0,
+                "resolved_reports": item_aggregate["resolved_reports"] or 0,
+                "matches_generated": total_matches,
+                "recovery_success_rate": round(recovery_success_rate, 2),
+                "success_percentage": round(recovery_success_rate, 2),
+                "lost_items_this_month": item_aggregate["lost_items_this_month"] or 0,
+                "found_items_this_month": item_aggregate["found_items_this_month"] or 0,
+            },
+            "trends": {
+                "total_lost_items": round(
+                    trend(item_aggregate["lost_items_this_month"] or 0, item_aggregate["lost_items_previous_month"] or 0),
+                    2,
+                ),
+                "total_found_items": round(
+                    trend(item_aggregate["found_items_this_month"] or 0, item_aggregate["found_items_previous_month"] or 0),
+                    2,
+                ),
+                "items_successfully_returned": round(
+                    trend(claim_aggregate["completed_this_month"] or 0, claim_aggregate["completed_previous_month"] or 0),
+                    2,
+                ),
+                "active_claims": 0,
+                "open_lost_reports": 0,
+                "open_found_reports": 0,
+                "recovery_success_rate": round(
+                    trend(claim_aggregate["completed_this_month"] or 0, claim_aggregate["completed_previous_month"] or 0),
+                    2,
+                ),
+                "matches_generated": 0,
+            },
+            "charts": {
+                "lost_vs_found_items": [
+                    {"name": "Lost", "value": total_lost_items},
+                    {"name": "Found", "value": item_aggregate["total_found_items"] or 0},
+                ],
+                "monthly_recovery_trend": monthly_recovery_trend,
+                "category_distribution": category_distribution,
+            },
+        }
+        return Response(payload)
 
 
 class ItemClaimViewSet(viewsets.ModelViewSet):

@@ -82,6 +82,54 @@ export type ItemFilters = {
   search?: string
 }
 
+export type DashboardSummary = {
+  total_users: number
+  total_posts: number
+  total_lost_items: number
+  total_found_items: number
+  items_successfully_returned: number
+  active_claims: number
+  open_lost_reports: number
+  open_found_reports: number
+  active_reports: number
+  resolved_reports: number
+  matches_generated: number
+  recovery_success_rate: number
+  success_percentage: number
+  lost_items_this_month: number
+  found_items_this_month: number
+}
+
+export type DashboardTrendMap = {
+  total_lost_items: number
+  total_found_items: number
+  items_successfully_returned: number
+  active_claims: number
+  open_lost_reports: number
+  open_found_reports: number
+  recovery_success_rate: number
+  matches_generated: number
+}
+
+export type DashboardChartDatum = {
+  name?: string
+  month?: string
+  value?: number
+  lost?: number
+  found?: number
+  returned?: number
+}
+
+export type DashboardAnalytics = {
+  summary: DashboardSummary
+  trends: DashboardTrendMap
+  charts: {
+    lost_vs_found_items: DashboardChartDatum[]
+    monthly_recovery_trend: DashboardChartDatum[]
+    category_distribution: DashboardChartDatum[]
+  }
+}
+
 export async function listItems(filters: ItemFilters = {}) {
   const { data } = await api.get<Item[]>('/items/', { params: filters })
   return data
@@ -186,5 +234,10 @@ export async function confirmMatch(id: number) {
 
 export async function rejectMatch(id: number) {
   const { data } = await api.post<ItemMatch>(`/items/matches/${id}/reject/`)
+  return data
+}
+
+export async function getDashboardAnalytics() {
+  const { data } = await api.get<DashboardAnalytics>('/items/dashboard-analytics/')
   return data
 }

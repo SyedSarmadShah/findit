@@ -225,3 +225,57 @@ class ItemTests(APITestCase):
 
         match.refresh_from_db()
         self.assertEqual(match.status, ItemMatch.CONFIRMED)
+
+    def test_dashboard_analytics_summary_and_charts(self):
+        Item.objects.create(
+            owner=self.user1,
+            item_type='lost',
+            title='Laptop',
+            description='Lost near lab',
+            category='Electronics',
+            status=Item.OPEN,
+            date='2026-05-01',
+        )
+        found_item = Item.objects.create(
+            owner=self.user2,
+            item_type='found',
+            title='Laptop found',
+            description='Found in library',
+            category='Electronics',
+            status=Item.RESOLVED,
+            date='2026-05-02',
+        )
+
+        ItemClaim.objects.create(
+            item=found_item,
+            claimant=self.user1,
+            finder=self.user2,
+            status=ItemClaim.COMPLETED,
+            answers={
+                'brand': 'Lenovo',
+                'unique_marks': 'Sticker on lid',
+                'item_contents': 'Charger',
+                'additional_details': 'Serial number available',
+            },
+        )
+
+        ItemMatch.objects.create(
+            lost_item=Item.objects.filter(item_type='lost').first(),
+            found_item=found_item,
+            score=88,
+            status=ItemMatch.SUGGESTED,
+            match_reason='High confidence',
+        )
+
+        self.client.force_authenticate(user=self.user1)
+        resp = self.client.get(reverse('item-dashboard-analytics'))
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn('summary', resp.data)
+        self.assertIn('charts', resp.data)
+        self.assertEqual(resp.data['summary']['total_lost_items'], 1)
+        self.assertEqual(resp.data['summary']['total_found_items'], 1)
+        self.assertEqual(resp.data['summary']['items_successfully_returned'], 1)
+        self.assertEqual(resp.data['summary']['matches_generated'], 1)
+        self.assertEqual(resp.data['summary']['recovery_success_rate'], 100.0)
+        self.assertEqual(len(resp.data['charts']['lost_vs_found_items']), 2)

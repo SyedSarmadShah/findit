@@ -29,6 +29,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false
 
+    const handleSessionExpired = () => {
+      clearSession()
+      setUser(null)
+      setIsLoading(false)
+    }
+
+    window.addEventListener('findit-auth-expired', handleSessionExpired)
+
     const bootstrap = async () => {
       const access = getAccessToken()
       const refresh = getRefreshToken()
@@ -68,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true
+      window.removeEventListener('findit-auth-expired', handleSessionExpired)
     }
   }, [])
 

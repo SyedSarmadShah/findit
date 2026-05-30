@@ -16,6 +16,7 @@ export default function NotificationBell() {
   const containerRef = useRef<HTMLDivElement>(null)
   const seenIdsRef = useRef<Set<number>>(new Set())
   const initializedRef = useRef(false)
+  const loadErrorNotifiedRef = useRef(false)
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,9 +43,11 @@ export default function NotificationBell() {
       seenIdsRef.current = new Set(data.map((notification) => notification.id))
       setNotifications(data)
       initializedRef.current = true
+      loadErrorNotifiedRef.current = false
     } catch {
-      if (!initializedRef.current) {
+      if (!loadErrorNotifiedRef.current) {
         showToast('Unable to load notifications right now.', 'error')
+        loadErrorNotifiedRef.current = true
       }
     } finally {
       setLoading(false)
@@ -55,6 +58,7 @@ export default function NotificationBell() {
     if (!isAuthenticated) {
       setNotifications([])
       setLoading(false)
+      loadErrorNotifiedRef.current = false
       return
     }
 

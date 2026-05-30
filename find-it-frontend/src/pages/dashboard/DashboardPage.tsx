@@ -1,112 +1,88 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import StatCard from '../../components/dashboard/StatCard'
 import ItemGrid from '../../components/items/ItemGrid'
 import MatchCard from '../../components/items/MatchCard'
 import CompareMatchModal from '../../components/items/CompareMatchModal'
 import {
-  approveClaim,
   confirmMatch,
-  listClaimHistory,
-  listClaimReviewQueue,
+  getDashboardAnalytics,
+  type DashboardAnalytics,
   listItems,
   listMatches,
-  listNotifications,
-  rejectClaim,
   rejectMatch,
 } from '../../services/itemService'
 import { useToast } from '../../components/ui/ToastProvider'
 
-function claimStatusLabel(status: string) {
-  return status.charAt(0).toUpperCase() + status.slice(1)
+const CHART_COLORS = ['#315b4f', '#c45b2a', '#2d4f80', '#b58f2a', '#7a3d2c', '#2f6f69']
+
+function StatIcon({ path }: { path: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d={path} />
+    </svg>
+  )
 }
 
 export default function DashboardPage() {
   const [items, setItems] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [claimHistory, setClaimHistory] = useState<any[]>([])
-  const [reviewQueue, setReviewQueue] = useState<any[]>([])
-  const [notifications, setNotifications] = useState<any[]>([])
   const [matches, setMatches] = useState<any[]>([])
+  const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
+  const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState<any | null>(null)
-  const [reviewLoadingId, setReviewLoadingId] = useState<number | null>(null)
   const [matchLoadingId, setMatchLoadingId] = useState<number | null>(null)
-  const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({})
+  const hasShownAnalyticsError = useRef(false)
   const { showToast } = useToast()
 
-  useEffect(() => {
-    let cancelled = false
+  const loadDashboard = async (options?: { silent?: boolean; showError?: boolean }) => {
+    const silent = options?.silent ?? false
+    const showError = options?.showError ?? true
 
-    const load = async () => {
+    if (!silent) {
       setLoading(true)
-      try {
-        const [itemData, historyData, reviewData, notificationData, matchData] = await Promise.all([
-          listItems({}),
-          listClaimHistory(),
-          listClaimReviewQueue(),
-          listNotifications(),
-          listMatches(),
-        ])
-        if (!cancelled) {
-          setItems(itemData.slice(0, 4))
-          setClaimHistory(historyData.slice(0, 4))
-          setReviewQueue(reviewData.slice(0, 4))
-          setNotifications(notificationData.slice(0, 4))
-          setMatches(matchData.slice(0, 4))
-          setReviewNotes(
-            reviewData.slice(0, 4).reduce<Record<number, string>>((accumulator, claim) => {
-              accumulator[claim.id] = claim.verification_notes || ''
-              return accumulator
-            }, {}),
-          )
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
+    }
+    try {
+      const [analyticsData, itemData, matchData] = await Promise.all([getDashboardAnalytics(), listItems({}), listMatches()])
+      setAnalytics(analyticsData)
+      setItems(itemData.slice(0, 4))
+      setMatches(matchData.slice(0, 4))
+    } catch (error) {
+      if (showError && !hasShownAnalyticsError.current) {
+        hasShownAnalyticsError.current = true
+        showToast('Unable to load dashboard analytics right now.', 'error')
+      }
+      if (import.meta.env.DEV) {
+        console.error('Dashboard analytics refresh failed', error)
+      }
+    } finally {
+      if (!silent) {
+        setLoading(false)
+      }
+    }
+  }
+
+  useEffect(() => {
+    void loadDashboard({ silent: false, showError: true })
+
+    const intervalId = window.setInterval(() => {
+      void loadDashboard({ silent: true, showError: false })
+    }, 30000)
+
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadDashboard({ silent: true, showError: false })
       }
     }
 
-    void load()
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+
     return () => {
-      cancelled = true
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
     }
   }, [])
-
-  const handleReview = async (claimId: number, action: 'approve' | 'reject') => {
-    setReviewLoadingId(claimId)
-    try {
-      const notes = reviewNotes[claimId]?.trim()
-      if (action === 'approve') {
-        await approveClaim(claimId, notes ? { verification_notes: notes } : undefined)
-        showToast('Claim approved and item status updated.', 'success')
-      } else {
-        await rejectClaim(claimId, notes ? { verification_notes: notes } : undefined)
-        showToast('Claim rejected and claimant notified.', 'info')
-      }
-      const [historyData, reviewData, notificationData] = await Promise.all([
-        listClaimHistory(),
-        listClaimReviewQueue(),
-        listNotifications(),
-      ])
-      setClaimHistory(historyData.slice(0, 4))
-      setReviewQueue(reviewData.slice(0, 4))
-      setNotifications(notificationData.slice(0, 4))
-      setReviewNotes(
-        reviewData.slice(0, 4).reduce<Record<number, string>>((accumulator, claim) => {
-          accumulator[claim.id] = claim.verification_notes || ''
-          return accumulator
-        }, {}),
-      )
-    } catch {
-      showToast('Unable to update claim status right now.', 'error')
-    } finally {
-      setReviewLoadingId(null)
-    }
-  }
-
-  const refreshMatches = async () => {
-    const [matchData, notificationData] = await Promise.all([listMatches(), listNotifications()])
-    setMatches(matchData.slice(0, 4))
-    setNotifications(notificationData.slice(0, 4))
-  }
 
   const handleMatchReview = async (matchId: number, action: 'confirm' | 'reject') => {
     setMatchLoadingId(matchId)
@@ -118,7 +94,7 @@ export default function DashboardPage() {
         await rejectMatch(matchId)
         showToast('Match rejected.', 'info')
       }
-      await refreshMatches()
+      await loadDashboard({ silent: true, showError: false })
       setSelectedMatch(null)
     } catch {
       showToast('Unable to update match right now.', 'error')
@@ -126,6 +102,41 @@ export default function DashboardPage() {
       setMatchLoadingId(null)
     }
   }
+
+  const summary = analytics?.summary
+  const trends = analytics?.trends
+  const monthlyTrend = analytics?.charts.monthly_recovery_trend ?? []
+  const recoveryDelta = useMemo(() => {
+    if (monthlyTrend.length < 2) {
+      return 0
+    }
+
+    const current = monthlyTrend[monthlyTrend.length - 1]?.returned ?? 0
+    const previous = monthlyTrend[monthlyTrend.length - 2]?.returned ?? 0
+    if (!previous) {
+      return current > 0 ? 100 : 0
+    }
+    return Number((((current - previous) / previous) * 100).toFixed(2))
+  }, [monthlyTrend])
+
+  const statCards = summary
+    ? [
+        {
+          title: 'Total Lost Items',
+          value: summary.total_lost_items.toLocaleString(),
+          trend: undefined,
+          icon: <StatIcon path="M12 3l8 4v5c0 5-3.4 8.6-8 9-4.6-.4-8-4-8-9V7l8-4z" />,
+          accentClass: 'from-rust/20 to-transparent',
+        },
+        {
+          title: 'Total Found Items',
+          value: summary.total_found_items.toLocaleString(),
+          trend: undefined,
+          icon: <StatIcon path="M3 12h18M12 3v18" />,
+          accentClass: 'from-moss/20 to-transparent',
+        },
+      ]
+    : []
 
   return (
     <div className="space-y-8 pb-10">
@@ -136,12 +147,12 @@ export default function DashboardPage() {
             A modern campus portal for lost and found items.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-ink/70 dark:text-paper/70">
-            Post reports, search recovered items, and switch between light and dark mode for a cleaner campus workflow.
+            Live analytics for your campus recovery platform, with instant visibility into claims, returns, and match quality.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Responsive nav</span>
-            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Search filters</span>
-            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Dark mode</span>
+            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Real-time metrics</span>
+            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Recovery trend charts</span>
+            <span className="rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/75">Category insights</span>
           </div>
         </div>
 
@@ -164,6 +175,46 @@ export default function DashboardPage() {
       </section>
 
       <section className="space-y-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Platform statistics</p>
+          <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Recovery metrics at a glance</h2>
+        </div>
+        {loading || !analytics ? (
+          <div className="h-20 w-full animate-pulse rounded-2xl bg-black/5 dark:bg-white/5" />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+            {statCards.map((card) => (
+              <StatCard
+                key={card.title}
+                title={card.title}
+                value={card.value}
+                trend={card.trend}
+                icon={card.icon}
+                accentClass={card.accentClass}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <article className="rounded-3xl border border-black/5 bg-white/80 p-5 dark:border-white/10 dark:bg-white/5">
+          <p className="text-xs font-semibold uppercase tracking-[0.17em] text-ink/50 dark:text-paper/55">Lost Items This Month</p>
+          <p className="mt-2 font-display text-3xl font-bold text-ink dark:text-paper">{summary?.lost_items_this_month ?? 0}</p>
+        </article>
+        <article className="rounded-3xl border border-black/5 bg-white/80 p-5 dark:border-white/10 dark:bg-white/5">
+          <p className="text-xs font-semibold uppercase tracking-[0.17em] text-ink/50 dark:text-paper/55">Found Items This Month</p>
+          <p className="mt-2 font-display text-3xl font-bold text-ink dark:text-paper">{summary?.found_items_this_month ?? 0}</p>
+        </article>
+        <article className="rounded-3xl border border-black/5 bg-white/80 p-5 dark:border-white/10 dark:bg-white/5">
+          <p className="text-xs font-semibold uppercase tracking-[0.17em] text-ink/50 dark:text-paper/55">Recovery Trends</p>
+          <p className="mt-2 font-display text-3xl font-bold text-ink dark:text-paper">{recoveryDelta > 0 ? '+' : ''}{recoveryDelta.toFixed(1)}%</p>
+        </article>
+      </section>
+
+      {/* Charts removed - dashboard simplified to only Lost and Found metrics per user request */}
+
+      <section className="space-y-4">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-ink/45 dark:text-paper/45">Recent items</p>
@@ -178,97 +229,6 @@ export default function DashboardPage() {
           emptyTitle="No recent items yet"
           emptyDescription="New lost and found posts will appear here once the campus feed is active."
         />
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-6">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Claim history</p>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Your submitted claims</h2>
-          </div>
-          {claimHistory.length ? (
-            <div className="grid gap-3">
-              {claimHistory.map((claim) => (
-                <article key={claim.id} className="rounded-2xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-ink dark:text-paper">{claim.item_title || `Item #${claim.item}`}</p>
-                      <p className="text-sm text-ink/60 dark:text-paper/60">Submitted {new Date(claim.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-ink/70 dark:bg-white/10 dark:text-paper/75">
-                      {claimStatusLabel(claim.status)}
-                    </span>
-                  </div>
-                  <div className="mt-3 grid gap-2 text-sm text-ink/65 dark:text-paper/65">
-                    <p><span className="font-semibold text-ink dark:text-paper">Brand:</span> {claim.answers?.brand}</p>
-                    <p><span className="font-semibold text-ink dark:text-paper">Marks:</span> {claim.answers?.unique_marks}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-ink/60 dark:text-paper/60">No claims submitted yet.</p>
-          )}
-        </div>
-
-        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-6">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rust dark:text-paper/45">Finder inbox</p>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Review claim requests</h2>
-          </div>
-          {reviewQueue.length ? (
-            <div className="grid gap-3">
-              {reviewQueue.map((claim) => (
-                <article key={claim.id} className="rounded-2xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-ink dark:text-paper">{claim.item_title || `Item #${claim.item}`}</p>
-                      <p className="text-sm text-ink/60 dark:text-paper/60">Claimant {claim.claimant_email}</p>
-                    </div>
-                    <span className="rounded-full bg-moss/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-moss dark:bg-moss/20 dark:text-paper">
-                      {claimStatusLabel(claim.status)}
-                    </span>
-                  </div>
-                  <div className="mt-3 grid gap-2 text-sm text-ink/65 dark:text-paper/65">
-                    <p><span className="font-semibold text-ink dark:text-paper">Brand:</span> {claim.answers?.brand}</p>
-                    <p><span className="font-semibold text-ink dark:text-paper">Marks:</span> {claim.answers?.unique_marks}</p>
-                    <p><span className="font-semibold text-ink dark:text-paper">Contents:</span> {claim.answers?.item_contents}</p>
-                    <p><span className="font-semibold text-ink dark:text-paper">Proof:</span> {claim.answers?.additional_details}</p>
-                  </div>
-                  <label className="mt-4 grid gap-2 text-sm font-medium text-ink dark:text-paper">
-                    Verification notes
-                    <textarea
-                      value={reviewNotes[claim.id] ?? claim.verification_notes ?? ''}
-                      onChange={(event) => setReviewNotes((current) => ({ ...current, [claim.id]: event.target.value }))}
-                      className="min-h-[92px] rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
-                      placeholder="Optional finder/admin notes"
-                    />
-                  </label>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={reviewLoadingId === claim.id}
-                      onClick={() => void handleReview(claim.id, 'approve')}
-                      className="rounded-full bg-moss px-4 py-2 text-sm font-semibold text-paper transition hover:opacity-90 disabled:opacity-60"
-                    >
-                      {reviewLoadingId === claim.id ? 'Updating...' : 'Approve'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={reviewLoadingId === claim.id}
-                      onClick={() => void handleReview(claim.id, 'reject')}
-                      className="rounded-full bg-rust px-4 py-2 text-sm font-semibold text-paper transition hover:opacity-90 disabled:opacity-60"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-ink/60 dark:text-paper/60">No claim requests are waiting for review.</p>
-          )}
-        </div>
       </section>
 
       <section className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
@@ -289,46 +249,6 @@ export default function DashboardPage() {
         ) : (
           <p className="text-sm text-ink/60 dark:text-paper/60">No potential matches have been suggested yet.</p>
         )}
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-navy dark:text-paper/45">Notifications</p>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Claim updates</h2>
-          </div>
-          {notifications.length ? (
-            <div className="grid gap-3">
-              {notifications.map((notification) => (
-                <article key={notification.id} className="rounded-2xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-ink dark:text-paper">{notification.title}</p>
-                      <p className="mt-1 text-sm text-ink/65 dark:text-paper/65">{notification.message}</p>
-                    </div>
-                    <span className="rounded-full bg-black/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/60 dark:bg-white/10 dark:text-paper/70">
-                      {notification.type.replaceAll('_', ' ')}
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-ink/60 dark:text-paper/60">No notifications yet.</p>
-          )}
-        </div>
-
-        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Claim workflow</p>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Secure recovery</h2>
-          </div>
-          <div className="grid gap-3 text-sm leading-6 text-ink/70 dark:text-paper/70">
-            <div className="rounded-2xl bg-black/5 p-4 dark:bg-white/5">Authenticated users submit a claim with brand, marks, contents, and proof details.</div>
-            <div className="rounded-2xl bg-black/5 p-4 dark:bg-white/5">The finder reviews the answer set, then approves or rejects the request.</div>
-            <div className="rounded-2xl bg-black/5 p-4 dark:bg-white/5">Claim history, notifications, and item status changes stay synced automatically.</div>
-          </div>
-        </div>
       </section>
 
       <CompareMatchModal
