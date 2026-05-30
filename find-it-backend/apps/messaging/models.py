@@ -28,11 +28,13 @@ class Notification(models.Model):
     CLAIM_SUBMITTED = "claim_submitted"
     CLAIM_APPROVED = "claim_approved"
     CLAIM_REJECTED = "claim_rejected"
+    MATCH_SUGGESTED = "match_suggested"
 
     KIND_CHOICES = [
         (CLAIM_SUBMITTED, "Claim submitted"),
         (CLAIM_APPROVED, "Claim approved"),
         (CLAIM_REJECTED, "Claim rejected"),
+        (MATCH_SUGGESTED, "Match suggested"),
     ]
 
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
@@ -40,6 +42,7 @@ class Notification(models.Model):
     title = models.CharField(max_length=120)
     body = models.TextField()
     claim = models.ForeignKey("items.ItemClaim", on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
+    match = models.ForeignKey("items.ItemMatch", on_delete=models.CASCADE, related_name="notifications", null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

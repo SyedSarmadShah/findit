@@ -28,22 +28,39 @@ export default function AppShell() {
     localStorage.setItem('findit-theme', theme)
   }, [theme])
 
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [menuOpen])
+
   const handleLogout = async () => {
     await logout()
     navigate('/login', { replace: true })
   }
 
   return (
-    <div className="min-h-screen text-ink dark:text-paper">
-      <header className="sticky top-0 z-30 border-b border-black/5 bg-[color:var(--app-bg)]/85 backdrop-blur-xl dark:border-white/10 dark:bg-[color:var(--app-bg)]/80">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen overflow-x-hidden text-ink dark:text-paper">
+      <header className="sticky top-0 z-40 border-b border-black/5 bg-[color:var(--app-bg)]/90 backdrop-blur-xl dark:border-white/10 dark:bg-[color:var(--app-bg)]/85">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-ink text-paper shadow-glow dark:bg-paper dark:text-ink">
+            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-ink text-paper shadow-glow dark:bg-paper dark:text-ink sm:h-11 sm:w-11">
               <span className="font-display text-lg font-bold">F</span>
             </div>
             <div>
-              <div className="font-display text-xl font-bold tracking-tight">Find-It</div>
-              <div className="text-xs uppercase tracking-[0.24em] text-ink/45 dark:text-paper/50">Campus recovery network</div>
+              <div className="font-display text-lg font-bold tracking-tight sm:text-xl">Find-It</div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-ink/45 dark:text-paper/50 sm:text-xs sm:tracking-[0.24em]">Campus recovery network</div>
             </div>
           </Link>
 
@@ -74,15 +91,33 @@ export default function AppShell() {
             <button
               type="button"
               onClick={() => setMenuOpen((current) => !current)}
-              className="rounded-full border border-black/10 bg-white/70 px-4 py-2 text-sm font-medium text-ink shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-paper"
+              className="rounded-full border border-black/10 bg-white/70 px-4 py-2 text-sm font-medium text-ink shadow-sm transition hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-paper dark:hover:bg-white/10"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-drawer"
             >
-              Menu
+              {menuOpen ? 'Close' : 'Menu'}
             </button>
           </div>
         </div>
 
-        <div className={`mx-auto w-full max-w-7xl px-4 pb-4 sm:px-6 lg:hidden lg:px-8 ${menuOpen ? 'block' : 'hidden'}`}>
-          <div className="grid gap-2 rounded-[1.5rem] border border-black/5 bg-white/80 p-3 shadow-glow backdrop-blur dark:border-white/10 dark:bg-white/5">
+        <div className={`fixed inset-0 z-40 lg:hidden ${menuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+          <button
+            type="button"
+            aria-label="Close mobile menu overlay"
+            onClick={() => setMenuOpen(false)}
+            className={`absolute inset-0 bg-ink/45 transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0'}`}
+          />
+          <aside
+            id="mobile-drawer"
+            className={`absolute right-0 top-0 flex h-full w-[min(88vw,20rem)] flex-col gap-3 overflow-y-auto border-l border-black/5 bg-[color:var(--app-bg)] p-4 shadow-[0_30px_100px_rgba(11,23,39,0.24)] transition-transform duration-300 dark:border-white/10 dark:bg-[color:var(--app-bg)] ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.24em] text-ink/45 dark:text-paper/45">Navigation</span>
+              <button type="button" onClick={() => setMenuOpen(false)} className="rounded-full bg-black/5 px-3 py-2 text-sm font-medium text-ink dark:bg-white/5 dark:text-paper">
+                Close
+              </button>
+            </div>
+            <div className="grid gap-2 rounded-[1.5rem] border border-black/5 bg-white/80 p-3 shadow-glow backdrop-blur dark:border-white/10 dark:bg-white/5">
             <NavLink to="/dashboard" className={navClass} onClick={() => setMenuOpen(false)}>
               Dashboard
             </NavLink>
@@ -102,12 +137,20 @@ export default function AppShell() {
               </button>
             </div>
           </div>
+          </aside>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl px-4 pb-24 pt-5 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8">
         <Outlet />
       </main>
+
+      <Link
+        to="/items/new"
+        className="fixed bottom-4 right-4 z-30 inline-flex items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-paper shadow-[0_16px_36px_rgba(49,91,79,0.3)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(49,91,79,0.36)] lg:hidden"
+      >
+        Post Item
+      </Link>
     </div>
   )
 }

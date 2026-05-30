@@ -33,13 +33,13 @@ export default function LoginPage() {
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-3">
           <input
-            className="w-full rounded-2xl border border-black/8 bg-white px-4 py-3.5 text-sm text-[#1c1c1e] outline-none transition placeholder:text-black/28 focus:border-[#9a6d5f] focus:ring-4 focus:ring-[#9a6d5f]/10"
+            className="w-full rounded-2xl border border-black/8 bg-white px-4 py-3.5 text-base text-[#1c1c1e] outline-none transition placeholder:text-black/28 focus:border-[#9a6d5f] focus:ring-4 focus:ring-[#9a6d5f]/10 sm:text-sm"
             placeholder="Email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           <input
-            className="w-full rounded-2xl border border-black/8 bg-white px-4 py-3.5 text-sm text-[#1c1c1e] outline-none transition placeholder:text-black/28 focus:border-[#9a6d5f] focus:ring-4 focus:ring-[#9a6d5f]/10"
+            className="w-full rounded-2xl border border-black/8 bg-white px-4 py-3.5 text-base text-[#1c1c1e] outline-none transition placeholder:text-black/28 focus:border-[#9a6d5f] focus:ring-4 focus:ring-[#9a6d5f]/10 sm:text-sm"
             type="password"
             placeholder="Password"
             value={form.password}

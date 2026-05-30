@@ -46,43 +46,43 @@ export default function ItemCard({ id, itemType = 'lost', title, description, ca
   const detailsHref = `/items/${id}`
 
   return (
-    <article className="group overflow-hidden rounded-[1.75rem] border border-black/5 bg-white/80 shadow-[0_18px_50px_rgba(11,23,39,0.08)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(11,23,39,0.16)] dark:border-white/10 dark:bg-white/5">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-black/5 bg-white/80 shadow-[0_18px_50px_rgba(11,23,39,0.08)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(11,23,39,0.16)] dark:border-white/10 dark:bg-white/5">
       <div className="relative aspect-[4/3] overflow-hidden bg-sand dark:bg-white/5">
         <img src={resolvedImage} alt={title} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
-        <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-          <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${itemTypeTone[itemType]}`}>
+        <div className="absolute left-3 top-3 flex flex-wrap gap-2 sm:left-4 sm:top-4">
+          <span className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] sm:text-[11px] ${itemTypeTone[itemType]}`}>
             {itemTypeLabel}
           </span>
-          <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${statusTone[status as keyof typeof statusTone] ?? statusTone.open}`}>
+          <span className={`rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] sm:text-[11px] ${statusTone[status as keyof typeof statusTone] ?? statusTone.open}`}>
             {statusLabel}
           </span>
         </div>
         {showActions ? (
           <Link
             to={detailsHref}
-            className="absolute right-4 top-4 rounded-full border border-white/70 bg-white/90 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink shadow-[0_10px_24px_rgba(11,23,39,0.15)] transition duration-200 hover:-translate-y-0.5 hover:bg-paper focus:outline-none focus:ring-2 focus:ring-moss/40 dark:border-white/15 dark:bg-surface-strong dark:text-paper"
+            className="absolute right-3 top-3 rounded-full border border-white/70 bg-white/90 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink shadow-[0_10px_24px_rgba(11,23,39,0.15)] transition duration-200 hover:-translate-y-0.5 hover:bg-paper focus:outline-none focus:ring-2 focus:ring-moss/40 dark:border-white/15 dark:bg-surface-strong dark:text-paper sm:right-4 sm:top-4 sm:px-4 sm:text-[11px] sm:tracking-[0.2em]"
           >
             View details
           </Link>
         ) : null}
       </div>
 
-      <div className="flex h-full flex-col gap-4 p-5 sm:p-6">
+      <div className="flex h-full flex-col gap-4 p-4 sm:p-6">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/45 dark:text-paper/45">
             <span className="rounded-full bg-black/5 px-3 py-1 dark:bg-white/5">{category || 'General'}</span>
             <span className="rounded-full bg-black/5 px-3 py-1 dark:bg-white/5">{location || 'Campus location'}</span>
             <span className="rounded-full bg-black/5 px-3 py-1 dark:bg-white/5">{formatDate(date)}</span>
           </div>
-          <h3 className="font-display text-2xl font-bold tracking-tight text-ink dark:text-paper">{title}</h3>
+          <h3 className="font-display text-xl font-bold tracking-tight text-ink dark:text-paper sm:text-2xl">{title}</h3>
           <p className="text-sm leading-6 text-ink/70 dark:text-paper/70">{description}</p>
         </div>
 
         {showActions ? (
-          <div className="mt-auto flex flex-wrap gap-3 pt-2">
+          <div className="mt-auto flex flex-col gap-3 pt-2 sm:flex-row">
             <Link
               to={detailsHref}
-              className="inline-flex items-center justify-center rounded-full border border-navy/15 bg-navy px-5 py-3 text-sm font-semibold text-paper shadow-[0_12px_28px_rgba(8,18,35,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-navy/95 hover:shadow-[0_18px_34px_rgba(8,18,35,0.24)]"
+              className="inline-flex w-full items-center justify-center rounded-full border border-navy/15 bg-navy px-5 py-3 text-sm font-semibold text-paper shadow-[0_12px_28px_rgba(8,18,35,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-navy/95 hover:shadow-[0_18px_34px_rgba(8,18,35,0.24)] sm:w-auto"
             >
               View Details
             </Link>
@@ -90,7 +90,7 @@ export default function ItemCard({ id, itemType = 'lost', title, description, ca
               <button
                 type="button"
                 onClick={onClaim}
-                className="inline-flex items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-paper transition duration-200 hover:-translate-y-0.5 hover:bg-moss/95 hover:shadow-lg hover:shadow-moss/10"
+                className="inline-flex w-full items-center justify-center rounded-full bg-moss px-5 py-3 text-sm font-semibold text-paper transition duration-200 hover:-translate-y-0.5 hover:bg-moss/95 hover:shadow-lg hover:shadow-moss/10 sm:w-auto"
               >
                 Claim Item
               </button>

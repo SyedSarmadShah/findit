@@ -25,4 +25,4 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user).select_related("recipient", "claim")
+        return Notification.objects.filter(recipient=self.request.user).select_related("recipient", "claim", "match", "match__lost_item", "match__found_item")

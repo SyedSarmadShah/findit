@@ -38,7 +38,7 @@ export default function SearchFilters({
         <button
           type="button"
           onClick={onReset}
-          className="w-fit rounded-full border border-black/10 px-4 py-2 text-sm font-medium text-ink transition hover:bg-black/5 dark:border-white/10 dark:text-paper dark:hover:bg-white/5"
+          className="w-full rounded-full border border-black/10 px-4 py-3 text-sm font-medium text-ink transition hover:bg-black/5 dark:border-white/10 dark:text-paper dark:hover:bg-white/5 sm:w-fit sm:py-2"
         >
           Reset filters
         </button>
@@ -51,7 +51,7 @@ export default function SearchFilters({
             value={query}
             onChange={handleChange(onQueryChange)}
             placeholder="Search title, location, or description"
-            className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35 sm:text-sm"
           />
         </label>
 
@@ -60,7 +60,7 @@ export default function SearchFilters({
           <select
             value={category}
             onChange={handleChange(onCategoryChange)}
-            className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper"
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper sm:text-sm"
           >
             <option value="">All categories</option>
             <option value="Bags">Bags</option>
@@ -76,7 +76,7 @@ export default function SearchFilters({
           <select
             value={status}
             onChange={handleChange(onStatusChange)}
-            className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper"
+            className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper sm:text-sm"
           >
             <option value="">Any status</option>
             <option value="open">Open</option>

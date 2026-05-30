@@ -54,11 +54,11 @@ export default function ClaimRequestModal({ open, itemTitle, onClose, onSubmit }
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/45 px-3 py-4 backdrop-blur-sm sm:items-center sm:px-6">
-      <div className="w-full max-w-2xl rounded-[2rem] border border-black/10 bg-[color:var(--app-surface)] p-4 shadow-[0_30px_80px_rgba(11,23,39,0.28)] backdrop-blur-xl dark:border-white/10 sm:p-6">
+      <div className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-black/10 bg-[color:var(--app-surface)] p-4 shadow-[0_30px_80px_rgba(11,23,39,0.28)] backdrop-blur-xl dark:border-white/10 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-moss">Claim item</p>
-            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Verify ownership of {itemTitle}</h2>
+            <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink dark:text-paper sm:text-3xl">Verify ownership of {itemTitle}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-ink/65 dark:text-paper/65">
               Share specific details that only the real owner should know. The finder will review these answers before approving the claim.
             </p>
@@ -112,7 +112,7 @@ export default function ClaimRequestModal({ open, itemTitle, onClose, onSubmit }
 
           {error ? <p className="rounded-2xl bg-rust/10 px-4 py-3 text-sm text-rust dark:bg-rust/15 dark:text-paper">{error}</p> : null}
 
-          <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
             <button type="button" onClick={onClose} className="rounded-full bg-black/5 px-5 py-3 text-sm font-semibold text-ink transition hover:bg-black/10 dark:bg-white/5 dark:text-paper dark:hover:bg-white/10">
               Cancel
             </button>

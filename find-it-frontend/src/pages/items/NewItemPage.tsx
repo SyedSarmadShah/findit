@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import ItemForm from './ItemForm'
 import { createItem } from '../../services/itemService'
+import PageHeader from '../../components/layout/PageHeader'
 
 export default function NewItemPage() {
   const navigate = useNavigate()
@@ -11,11 +12,12 @@ export default function NewItemPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-ink/45">New item</p>
-        <h1 className="mt-2 font-display text-4xl font-bold tracking-tight">Create a lost/found post</h1>
-      </header>
+    <div className="space-y-6 pb-4">
+      <PageHeader
+        eyebrow="New item"
+        title="Create a lost/found post"
+        description="Share a clear report with item details, a location, and an image so it is easy to match on smaller screens too."
+      />
       <ItemForm onSubmit={handleSubmit} />
     </div>
   )

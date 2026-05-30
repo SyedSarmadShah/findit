@@ -3,8 +3,11 @@ import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import ItemCard from '../../components/items/ItemCard'
 import ClaimRequestModal from '../../components/items/ClaimRequestModal'
-import { createClaim, getItem, reportItem } from '../../services/itemService'
+import MatchCard from '../../components/items/MatchCard'
+import CompareMatchModal from '../../components/items/CompareMatchModal'
+import { confirmMatch, createClaim, getItem, listMatches, rejectMatch, reportItem } from '../../services/itemService'
 import { useToast } from '../../components/ui/ToastProvider'
+import PageHeader from '../../components/layout/PageHeader'
 
 export default function ItemDetailPage() {
   const { id } = useParams()
@@ -13,6 +16,9 @@ export default function ItemDetailPage() {
   const [item, setItem] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [matches, setMatches] = useState<any[]>([])
+  const [selectedMatch, setSelectedMatch] = useState<any | null>(null)
+  const [matchLoadingId, setMatchLoadingId] = useState<number | null>(null)
 
   const [claimOpen, setClaimOpen] = useState(false)
 
@@ -55,6 +61,34 @@ export default function ItemDetailPage() {
       cancelled = true
     }
   }, [id])
+
+  useEffect(() => {
+    if (!item || !user) {
+      setMatches([])
+      return
+    }
+
+    let cancelled = false
+
+    const loadMatches = async () => {
+      try {
+        const data = await listMatches({ item: item.id })
+        if (!cancelled) {
+          setMatches(data)
+        }
+      } catch {
+        if (!cancelled) {
+          setMatches([])
+        }
+      }
+    }
+
+    void loadMatches()
+
+    return () => {
+      cancelled = true
+    }
+  }, [item, user])
 
   const isOwnItem = useMemo(() => {
     if (!item || !user) return false
@@ -102,6 +136,31 @@ export default function ItemDetailPage() {
     }
   }
 
+  const refreshMatches = async () => {
+    if (!item || !user) return
+    const data = await listMatches({ item: item.id })
+    setMatches(data)
+  }
+
+  const handleMatchReview = async (matchId: number, action: 'confirm' | 'reject') => {
+    setMatchLoadingId(matchId)
+    try {
+      if (action === 'confirm') {
+        await confirmMatch(matchId)
+        showToast('Match confirmed.', 'success')
+      } else {
+        await rejectMatch(matchId)
+        showToast('Match rejected.', 'info')
+      }
+      await refreshMatches()
+      setSelectedMatch(null)
+    } catch {
+      showToast('Unable to update match right now.', 'error')
+    } finally {
+      setMatchLoadingId(null)
+    }
+  }
+
   if (loading) {
     return <div className="rounded-2xl bg-white/70 p-6 dark:bg-white/5">Loading item details...</div>
   }
@@ -121,13 +180,11 @@ export default function ItemDetailPage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-ink/45">Item detail</p>
-        <h1 className="font-display text-4xl font-bold tracking-tight">Review and take action</h1>
-        <p className="max-w-3xl text-sm leading-6 text-ink/65 dark:text-paper/65">
-          The card below is just a preview. To claim a found item, use the Claim button in the section below to open the form and submit your proof.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Item detail"
+        title="Review and take action"
+        description="The card below is just a preview. To claim a found item, use the Claim button in the section below to open the form and submit your proof."
+      />
 
       <ItemCard
         id={item.id}
@@ -143,7 +200,33 @@ export default function ItemDetailPage() {
         showActions={false}
       />
 
-      <section id="claim-item" className="grid gap-4 rounded-2xl border border-black/5 bg-white/70 p-5 dark:border-white/10 dark:bg-white/5">
+      {user ? (
+        <section className="space-y-4 rounded-2xl border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-5">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Potential matches</p>
+              <h2 className="font-display text-2xl font-bold tracking-tight text-ink dark:text-paper">Suggested pairings for this item</h2>
+            </div>
+            <p className="max-w-2xl text-sm leading-6 text-ink/60 dark:text-paper/60">Matches are generated automatically from category, keywords, location, and date proximity.</p>
+          </div>
+
+          {matches.length ? (
+            <div className="grid gap-5">
+              {matches.map((match) => (
+                <MatchCard key={match.id} match={match} onCompare={setSelectedMatch} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-ink/60 dark:text-paper/60">No potential matches were found for this item yet.</p>
+          )}
+        </section>
+      ) : (
+        <section className="rounded-2xl border border-black/5 bg-white/70 p-5 text-sm text-ink/65 dark:border-white/10 dark:bg-white/5 dark:text-paper/65">
+          Sign in to review potential matches for this item.
+        </section>
+      )}
+
+      <section id="claim-item" className="grid gap-4 rounded-2xl border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-5">
         <h2 className="font-display text-2xl font-bold">Claim this item</h2>
         <p className="text-sm text-ink/65 dark:text-paper/65">
           Share proof points such as the brand, unique marks, and contents so the finder can verify ownership.
@@ -204,6 +287,15 @@ export default function ItemDetailPage() {
         {reportSuccess ? <p className="text-sm text-moss">{reportSuccess}</p> : null}
         {error ? <p className="text-sm text-rust">{error}</p> : null}
       </section>
+
+      <CompareMatchModal
+        open={Boolean(selectedMatch)}
+        match={selectedMatch}
+        onClose={() => setSelectedMatch(null)}
+        onConfirm={selectedMatch?.can_review ? () => handleMatchReview(selectedMatch.id, 'confirm') : undefined}
+        onReject={selectedMatch?.can_review ? () => handleMatchReview(selectedMatch.id, 'reject') : undefined}
+        busy={matchLoadingId === selectedMatch?.id}
+      />
     </div>
   )
 }

@@ -73,3 +73,33 @@ class ItemReport(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class ItemMatch(models.Model):
+    SUGGESTED = "suggested"
+    VIEWED = "viewed"
+    CONFIRMED = "confirmed"
+    REJECTED = "rejected"
+
+    STATUS_CHOICES = [
+        (SUGGESTED, "Suggested"),
+        (VIEWED, "Viewed"),
+        (CONFIRMED, "Confirmed"),
+        (REJECTED, "Rejected"),
+    ]
+
+    lost_item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="lost_matches")
+    found_item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="found_matches")
+    score = models.PositiveSmallIntegerField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=SUGGESTED)
+    match_reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-score", "-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["lost_item", "found_item"], name="unique_item_match_pair"),
+        ]
+
+    def __str__(self):
+        return f"Match #{self.pk}: {self.lost_item_id} <-> {self.found_item_id}"

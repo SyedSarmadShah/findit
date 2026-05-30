@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Item, ItemClaim, ItemReport
+from .models import Item, ItemClaim, ItemMatch, ItemReport
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -138,3 +138,59 @@ class ItemReportSerializer(serializers.ModelSerializer):
             "created_at",
         )
         read_only_fields = ("id", "reporter", "reporter_email", "created_at")
+
+
+class ItemMatchSerializer(serializers.ModelSerializer):
+    lost_item = ItemSerializer(read_only=True)
+    found_item = ItemSerializer(read_only=True)
+    score_percentage = serializers.SerializerMethodField()
+    other_item = serializers.SerializerMethodField()
+    can_review = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ItemMatch
+        fields = (
+            "id",
+            "lost_item",
+            "found_item",
+            "other_item",
+            "score",
+            "score_percentage",
+            "status",
+            "match_reason",
+            "created_at",
+            "can_review",
+        )
+        read_only_fields = fields
+
+    def get_score_percentage(self, obj):
+        return min(obj.score, 100)
+
+    def get_other_item(self, obj):
+        request = self.context.get("request")
+        current_item_id = None
+        if request is not None:
+            current_item_id = request.query_params.get("item")
+            if current_item_id is not None:
+                try:
+                    current_item_id = int(current_item_id)
+                except (TypeError, ValueError):
+                    current_item_id = None
+
+            if request.user.is_authenticated:
+                if obj.lost_item.owner_id == request.user.id:
+                    return ItemSerializer(obj.found_item, context=self.context).data
+                if obj.found_item.owner_id == request.user.id:
+                    return ItemSerializer(obj.lost_item, context=self.context).data
+
+        if current_item_id == obj.lost_item_id:
+            return ItemSerializer(obj.found_item, context=self.context).data
+        if current_item_id == obj.found_item_id:
+            return ItemSerializer(obj.lost_item, context=self.context).data
+        return ItemSerializer(obj.found_item, context=self.context).data
+
+    def get_can_review(self, obj):
+        request = self.context.get("request")
+        if request is None or not request.user.is_authenticated:
+            return False
+        return request.user.is_staff or obj.lost_item.owner_id == request.user.id or obj.found_item.owner_id == request.user.id

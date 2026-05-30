@@ -43,12 +43,26 @@ export type ItemClaim = {
 export type Notification = {
   id: number
   recipient: number
-  kind: 'claim_submitted' | 'claim_approved' | 'claim_rejected'
+  kind: 'claim_submitted' | 'claim_approved' | 'claim_rejected' | 'match_suggested'
   title: string
   body: string
   claim?: number | null
+  match?: number | null
   is_read: boolean
   created_at: string
+}
+
+export type ItemMatch = {
+  id: number
+  lost_item: Item
+  found_item: Item
+  other_item?: Item
+  score: number
+  score_percentage: number
+  status: 'suggested' | 'viewed' | 'confirmed' | 'rejected'
+  match_reason: string
+  created_at: string
+  can_review?: boolean
 }
 
 export type ItemReport = {
@@ -138,5 +152,25 @@ export async function reportItem(payload: { item: number; reason: string; detail
 
 export async function listNotifications() {
   const { data } = await api.get<Notification[]>('/messaging/notifications/')
+  return data
+}
+
+export type MatchFilters = {
+  item?: number
+  status?: ItemMatch['status']
+}
+
+export async function listMatches(filters: MatchFilters = {}) {
+  const { data } = await api.get<ItemMatch[]>('/items/matches/', { params: filters })
+  return data
+}
+
+export async function confirmMatch(id: number) {
+  const { data } = await api.post<ItemMatch>(`/items/matches/${id}/confirm/`)
+  return data
+}
+
+export async function rejectMatch(id: number) {
+  const { data } = await api.post<ItemMatch>(`/items/matches/${id}/reject/`)
   return data
 }

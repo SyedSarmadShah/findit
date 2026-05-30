@@ -29,13 +29,13 @@ export default function ImageUploader({ value, onChange, previewUrl, label = 'It
   const displayPreview = localPreview ?? previewUrl ?? PLACEHOLDER_IMAGE
 
   return (
-    <section className="grid gap-3 rounded-[1.5rem] border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5">
+    <section className="grid gap-3 rounded-[1.5rem] border border-black/10 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-5">
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-ink/45 dark:text-paper/45">{label}</p>
         <p className="text-sm text-ink/60 dark:text-paper/65">{helperText}</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
         <label className="flex cursor-pointer flex-col items-center justify-center rounded-[1.5rem] border border-dashed border-black/15 bg-white px-4 py-6 text-center transition hover:border-moss hover:bg-moss/5 dark:border-white/15 dark:bg-surface-strong dark:hover:border-moss/60">
           <input
             type="file"
@@ -43,14 +43,14 @@ export default function ImageUploader({ value, onChange, previewUrl, label = 'It
             onChange={(event) => onChange(event.target.files?.[0] ?? null)}
             className="sr-only"
           />
-          <span className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper dark:bg-paper dark:text-ink">
+          <span className="rounded-full bg-ink px-4 py-3 text-sm font-semibold text-paper dark:bg-paper dark:text-ink">
             Choose image
           </span>
           <span className="mt-3 text-sm text-ink/60 dark:text-paper/60">PNG, JPG, or WEBP</span>
         </label>
 
         <div className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-sand dark:border-white/10 dark:bg-white/5">
-          <div className="aspect-[4/3] w-full overflow-hidden">
+          <div className="aspect-[4/3] w-full overflow-hidden sm:aspect-[16/10]">
             <img src={displayPreview} alt="Item preview" className="h-full w-full object-cover" />
           </div>
           <div className="border-t border-black/10 px-4 py-3 text-sm text-ink/60 dark:border-white/10 dark:text-paper/60">

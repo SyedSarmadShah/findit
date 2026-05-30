@@ -47,12 +47,12 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-5 rounded-[2rem] border border-black/5 bg-white/80 p-5 shadow-[0_18px_50px_rgba(11,23,39,0.08)] backdrop-blur dark:border-white/10 dark:bg-white/5 sm:p-6">
-      <div className="grid gap-3 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="grid gap-5 rounded-[2rem] border border-black/5 bg-white/80 p-4 shadow-[0_18px_50px_rgba(11,23,39,0.08)] backdrop-blur dark:border-white/10 dark:bg-white/5 sm:p-6">
+      <div className="grid gap-3 md:grid-cols-2">
         <select
           value={form.item_type}
           onChange={(e) => setForm({ ...form, item_type: e.target.value })}
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper"
+          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper sm:text-sm"
         >
           <option value="lost">Lost</option>
           <option value="found">Found</option>
@@ -61,7 +61,7 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
           placeholder="Title"
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35 sm:text-sm"
         />
       </div>
 
@@ -69,27 +69,27 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
         placeholder="Description"
         value={form.description}
         onChange={(e) => setForm({ ...form, description: e.target.value })}
-        className="min-h-[140px] rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+        className="min-h-[140px] rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35 sm:text-sm"
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         <input
           placeholder="Category"
           value={form.category}
           onChange={(e) => setForm({ ...form, category: e.target.value })}
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35 sm:text-sm"
         />
         <input
           placeholder="Location"
           value={form.location}
           onChange={(e) => setForm({ ...form, location: e.target.value })}
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35"
+          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition placeholder:text-ink/35 focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper dark:placeholder:text-paper/35 sm:text-sm"
         />
         <input
           type="date"
           value={form.date}
           onChange={(e) => setForm({ ...form, date: e.target.value })}
-          className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper"
+          className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-base outline-none transition focus:border-moss focus:ring-2 focus:ring-moss/15 dark:border-white/10 dark:bg-surface-strong dark:text-paper sm:text-sm"
         />
       </div>
 
@@ -108,10 +108,10 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
       </div>
 
       {error ? <div className="text-sm text-rust">{error}</div> : null}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <button
           disabled={saving}
-          className="rounded-full bg-navy px-5 py-3 text-sm font-semibold text-paper transition hover:-translate-y-0.5 hover:bg-navy/95 disabled:translate-y-0 disabled:opacity-60"
+          className="w-full rounded-full bg-navy px-5 py-3.5 text-sm font-semibold text-paper transition hover:-translate-y-0.5 hover:bg-navy/95 disabled:translate-y-0 disabled:opacity-60 sm:w-auto"
           type="submit"
         >
           {saving ? 'Saving...' : 'Save Item'}

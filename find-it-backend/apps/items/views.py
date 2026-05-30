@@ -8,8 +8,9 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 
-from .models import Item, ItemClaim, ItemReport
-from .serializers import ItemClaimSerializer, ItemReportSerializer, ItemSerializer
+from .matching import create_matches_for_item
+from .models import Item, ItemClaim, ItemMatch, ItemReport
+from .serializers import ItemClaimSerializer, ItemMatchSerializer, ItemReportSerializer, ItemSerializer
 from apps.messaging.models import Notification
 
 
@@ -26,7 +27,11 @@ class ItemViewSet(viewsets.ModelViewSet):
         return Item.objects.select_related("owner")
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        item = serializer.save(owner=self.request.user)
+        try:
+            create_matches_for_item(item)
+        except Exception:
+            pass
 
     def perform_update(self, serializer):
         if serializer.instance.owner != self.request.user and not self.request.user.is_staff:
@@ -182,3 +187,62 @@ class ItemReportViewSet(viewsets.ModelViewSet):
         if instance.reporter != user and not user.is_staff:
             raise PermissionDenied("You cannot delete this report.")
         instance.delete()
+
+
+class ItemMatchViewSet(viewsets.ModelViewSet):
+    serializer_class = ItemMatchSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = ItemMatch.objects.select_related(
+            "lost_item",
+            "lost_item__owner",
+            "found_item",
+            "found_item__owner",
+        )
+
+        item_id = self.request.query_params.get("item")
+        if item_id:
+            queryset = queryset.filter(Q(lost_item_id=item_id) | Q(found_item_id=item_id))
+        else:
+            queryset = queryset.filter(Q(lost_item__owner=user) | Q(found_item__owner=user))
+
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        return queryset.distinct()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        visible_matches = queryset.filter(status=ItemMatch.SUGGESTED)
+        if visible_matches.exists():
+            visible_matches.update(status=ItemMatch.VIEWED)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def _review_match(self, request, new_status):
+        match = self.get_object()
+        user = request.user
+
+        if not (user.is_staff or match.lost_item.owner_id == user.id or match.found_item.owner_id == user.id):
+            raise PermissionDenied("You cannot review this match.")
+
+        match.status = new_status
+        match.save(update_fields=["status"])
+        return Response(self.get_serializer(match).data)
+
+    @action(detail=True, methods=["post"])
+    def confirm(self, request, pk=None):
+        return self._review_match(request, ItemMatch.CONFIRMED)
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        return self._review_match(request, ItemMatch.REJECTED)

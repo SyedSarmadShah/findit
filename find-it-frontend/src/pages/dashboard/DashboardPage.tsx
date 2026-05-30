@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ItemGrid from '../../components/items/ItemGrid'
-import { approveClaim, listClaimHistory, listClaimReviewQueue, listItems, listNotifications, rejectClaim } from '../../services/itemService'
+import MatchCard from '../../components/items/MatchCard'
+import CompareMatchModal from '../../components/items/CompareMatchModal'
+import {
+  approveClaim,
+  confirmMatch,
+  listClaimHistory,
+  listClaimReviewQueue,
+  listItems,
+  listMatches,
+  listNotifications,
+  rejectClaim,
+  rejectMatch,
+} from '../../services/itemService'
 import { useToast } from '../../components/ui/ToastProvider'
 
 function claimStatusLabel(status: string) {
@@ -14,7 +26,10 @@ export default function DashboardPage() {
   const [claimHistory, setClaimHistory] = useState<any[]>([])
   const [reviewQueue, setReviewQueue] = useState<any[]>([])
   const [notifications, setNotifications] = useState<any[]>([])
+  const [matches, setMatches] = useState<any[]>([])
+  const [selectedMatch, setSelectedMatch] = useState<any | null>(null)
   const [reviewLoadingId, setReviewLoadingId] = useState<number | null>(null)
+  const [matchLoadingId, setMatchLoadingId] = useState<number | null>(null)
   const [reviewNotes, setReviewNotes] = useState<Record<number, string>>({})
   const { showToast } = useToast()
 
@@ -24,17 +39,19 @@ export default function DashboardPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const [itemData, historyData, reviewData, notificationData] = await Promise.all([
+        const [itemData, historyData, reviewData, notificationData, matchData] = await Promise.all([
           listItems({}),
           listClaimHistory(),
           listClaimReviewQueue(),
           listNotifications(),
+          listMatches(),
         ])
         if (!cancelled) {
           setItems(itemData.slice(0, 4))
           setClaimHistory(historyData.slice(0, 4))
           setReviewQueue(reviewData.slice(0, 4))
           setNotifications(notificationData.slice(0, 4))
+          setMatches(matchData.slice(0, 4))
           setReviewNotes(
             reviewData.slice(0, 4).reduce<Record<number, string>>((accumulator, claim) => {
               accumulator[claim.id] = claim.verification_notes || ''
@@ -85,12 +102,37 @@ export default function DashboardPage() {
     }
   }
 
+  const refreshMatches = async () => {
+    const [matchData, notificationData] = await Promise.all([listMatches(), listNotifications()])
+    setMatches(matchData.slice(0, 4))
+    setNotifications(notificationData.slice(0, 4))
+  }
+
+  const handleMatchReview = async (matchId: number, action: 'confirm' | 'reject') => {
+    setMatchLoadingId(matchId)
+    try {
+      if (action === 'confirm') {
+        await confirmMatch(matchId)
+        showToast('Match confirmed.', 'success')
+      } else {
+        await rejectMatch(matchId)
+        showToast('Match rejected.', 'info')
+      }
+      await refreshMatches()
+      setSelectedMatch(null)
+    } catch {
+      showToast('Unable to update match right now.', 'error')
+    } finally {
+      setMatchLoadingId(null)
+    }
+  }
+
   return (
     <div className="space-y-8 pb-10">
-      <section className="grid gap-6 rounded-[2rem] border border-black/5 bg-white/70 p-6 shadow-glow backdrop-blur dark:border-white/10 dark:bg-white/5 lg:grid-cols-[1.5fr_1fr] lg:p-10">
+      <section className="grid gap-6 rounded-[2rem] border border-black/5 bg-white/70 p-4 shadow-glow backdrop-blur dark:border-white/10 dark:bg-white/5 sm:p-6 lg:grid-cols-[1.5fr_1fr] lg:p-10">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rust dark:text-paper/60">Dashboard</p>
-          <h1 className="mt-3 max-w-2xl font-display text-5xl font-bold tracking-tight text-ink dark:text-paper sm:text-6xl">
+          <h1 className="mt-3 max-w-2xl font-display text-3xl font-bold tracking-tight text-ink dark:text-paper sm:text-5xl">
             A modern campus portal for lost and found items.
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-ink/70 dark:text-paper/70">
@@ -103,7 +145,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 rounded-[1.75rem] bg-ink p-6 text-paper dark:bg-paper dark:text-ink">
+        <div className="grid gap-4 rounded-[1.75rem] bg-ink p-5 text-paper dark:bg-paper dark:text-ink sm:p-6">
           <div>
             <p className="text-sm uppercase tracking-[0.18em] text-paper/55 dark:text-ink/55">Quick actions</p>
             <h2 className="mt-2 font-display text-2xl font-bold">Start here</h2>
@@ -139,7 +181,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
+        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-6">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Claim history</p>
             <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Your submitted claims</h2>
@@ -169,7 +211,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
+        <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-6">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rust dark:text-paper/45">Finder inbox</p>
             <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Review claim requests</h2>
@@ -229,6 +271,26 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      <section className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-moss dark:text-paper/45">Potential matches</p>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-ink dark:text-paper">Suggested lost and found pairs</h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-ink/60 dark:text-paper/60">Matches are scored automatically from category, keywords, location, and date proximity.</p>
+        </div>
+
+        {matches.length ? (
+          <div className="grid gap-5">
+            {matches.map((match) => (
+              <MatchCard key={match.id} match={match} onCompare={setSelectedMatch} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-ink/60 dark:text-paper/60">No potential matches have been suggested yet.</p>
+        )}
+      </section>
+
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4 rounded-[2rem] border border-black/5 bg-white/70 p-6 dark:border-white/10 dark:bg-white/5">
           <div>
@@ -268,6 +330,15 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <CompareMatchModal
+        open={Boolean(selectedMatch)}
+        match={selectedMatch}
+        onClose={() => setSelectedMatch(null)}
+        onConfirm={selectedMatch?.can_review ? () => handleMatchReview(selectedMatch.id, 'confirm') : undefined}
+        onReject={selectedMatch?.can_review ? () => handleMatchReview(selectedMatch.id, 'reject') : undefined}
+        busy={matchLoadingId === selectedMatch?.id}
+      />
     </div>
   )
 }
