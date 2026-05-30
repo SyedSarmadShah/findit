@@ -96,6 +96,9 @@ export default function ItemDetailPage() {
   }, [item, user])
 
   const canClaim = Boolean(item && item.item_type === 'found' && item.status !== 'resolved' && !isOwnItem)
+  const mapX = item?.map_x !== undefined && item?.map_x !== null ? Number(item.map_x) : null
+  const mapY = item?.map_y !== undefined && item?.map_y !== null ? Number(item.map_y) : null
+  const hasMapPin = mapX !== null && mapY !== null && Number.isFinite(mapX) && Number.isFinite(mapY)
 
   const handleClaim = async (answers: {
     brand: string
@@ -199,6 +202,21 @@ export default function ItemDetailPage() {
         onClaim={canClaim ? () => setClaimOpen(true) : undefined}
         showActions={false}
       />
+
+      {hasMapPin ? (
+        <section className="space-y-3 rounded-2xl border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-5">
+          <h2 className="font-display text-2xl font-bold text-ink dark:text-paper">Marked location on map</h2>
+          <p className="text-sm text-ink/65 dark:text-paper/65">This is the exact point selected by the reporter on the Hitec campus map.</p>
+          <div className="relative overflow-hidden rounded-2xl border border-black/10 dark:border-white/10">
+            <img src="/map_hitec.png" alt="Hitec university map with marked location" className="h-auto w-full" />
+            <span
+              className="pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-red-600 shadow-[0_0_0_3px_rgba(220,38,38,0.35)]"
+              style={{ left: `${mapX}%`, top: `${mapY}%` }}
+              aria-hidden="true"
+            />
+          </div>
+        </section>
+      ) : null}
 
       {user ? (
         <section className="space-y-4 rounded-2xl border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-5">

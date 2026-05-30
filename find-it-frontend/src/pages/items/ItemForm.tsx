@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import ImageUploader from '../../components/ui/ImageUploader'
+import MapLocationPicker from '../../components/ui/MapLocationPicker'
 
 type ItemFormProps = {
   initial?: any
@@ -14,6 +15,8 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
     description: initial.description || '',
     category: initial.category || '',
     location: initial.location || '',
+    map_x: initial.map_x ?? null,
+    map_y: initial.map_y ?? null,
     status: initial.status || 'open',
     date: initial.date || new Date().toISOString().slice(0, 10),
     is_anonymous: initial.is_anonymous || false,
@@ -34,6 +37,8 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
       fd.append('description', form.description)
       fd.append('category', form.category)
       fd.append('location', form.location)
+      if (form.map_x !== null) fd.append('map_x', String(form.map_x))
+      if (form.map_y !== null) fd.append('map_y', String(form.map_y))
       fd.append('status', form.status)
       fd.append('date', form.date)
       fd.append('is_anonymous', String(form.is_anonymous))
@@ -94,6 +99,13 @@ export default function ItemForm({ initial = {}, onSubmit }: ItemFormProps) {
       </div>
 
       <ImageUploader value={image} onChange={setImage} previewUrl={existingImageUrl} />
+
+      <MapLocationPicker
+        mapX={form.map_x}
+        mapY={form.map_y}
+        onChange={(x, y) => setForm({ ...form, map_x: x, map_y: y })}
+        onClear={() => setForm({ ...form, map_x: null, map_y: null })}
+      />
 
       <div className="flex items-center gap-4 rounded-[1.25rem] bg-black/5 px-4 py-3 dark:bg-white/5">
         <label className="flex items-center gap-2 text-sm text-ink/65 dark:text-paper/70">

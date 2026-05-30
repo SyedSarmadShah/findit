@@ -21,6 +21,8 @@ class ItemSerializer(serializers.ModelSerializer):
             "image_url",
             "category",
             "location",
+            "map_x",
+            "map_y",
             "status",
             "date",
             "is_anonymous",

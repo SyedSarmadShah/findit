@@ -23,6 +23,8 @@ class Item(models.Model):
     image = models.ImageField(upload_to="items/", blank=True, null=True)
     category = models.CharField(max_length=100, blank=True)
     location = models.CharField(max_length=255, blank=True)
+    map_x = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
+    map_y = models.DecimalField(max_digits=6, decimal_places=3, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=OPEN)
     date = models.DateField()
     is_anonymous = models.BooleanField(default=False)

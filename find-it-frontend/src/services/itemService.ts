@@ -11,6 +11,8 @@ export type Item = {
   image_url?: string | null
   category: string
   location: string
+  map_x?: number | string | null
+  map_y?: number | string | null
   status: 'open' | 'matched' | 'resolved'
   date: string
   is_anonymous: boolean
