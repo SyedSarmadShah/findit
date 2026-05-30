@@ -204,11 +204,11 @@ export default function ItemDetailPage() {
       />
 
       {hasMapPin ? (
-        <section className="space-y-3 rounded-2xl border border-black/5 bg-white/70 p-4 dark:border-white/10 dark:bg-white/5 sm:p-5">
-          <h2 className="font-display text-2xl font-bold text-ink dark:text-paper">Marked location on map</h2>
+        <section className="space-y-2 rounded-2xl border border-black/5 bg-white/70 p-3 dark:border-white/10 dark:bg-white/5 sm:p-4">
+          <h2 className="font-display text-xl font-bold text-ink dark:text-paper">Marked location on map</h2>
           <p className="text-sm text-ink/65 dark:text-paper/65">This is the exact point selected by the reporter on the Hitec campus map.</p>
-          <div className="relative overflow-hidden rounded-2xl border border-black/10 dark:border-white/10">
-            <img src="/map_hitec.png" alt="Hitec university map with marked location" className="h-auto w-full" />
+          <div className="relative h-[210px] overflow-hidden rounded-2xl border border-black/10 dark:border-white/10 sm:h-[240px]">
+            <img src="/map_hitec.png" alt="Hitec university map with marked location" className="h-full w-full object-cover object-center" />
             <span
               className="pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-red-600 shadow-[0_0_0_3px_rgba(220,38,38,0.35)]"
               style={{ left: `${mapX}%`, top: `${mapY}%` }}
