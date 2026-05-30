@@ -73,7 +73,12 @@ export default function AppShell() {
             <NavLink to="/items/found" className={navClass}>
               Found Items
             </NavLink>
-            <NavLink to="/items/new" className={() => 'rounded-full bg-moss px-4 py-2 text-sm font-medium text-white shadow-[0_10px_24px_rgba(31,86,74,0.2)] transition hover:opacity-90 dark:bg-paper dark:text-ink'}>
+            <NavLink
+              to="/items/new"
+              className={() =>
+                'rounded-full bg-black px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.28)] ring-1 ring-black/20 transition hover:opacity-95 dark:bg-white dark:text-ink relative z-50'
+              }
+            >
               Report Item
             </NavLink>
             <NotificationBell />
@@ -128,7 +133,13 @@ export default function AppShell() {
             <NavLink to="/items/found" className={navClass} onClick={() => setMenuOpen(false)}>
               Found Items
             </NavLink>
-            <NavLink to="/items/new" className={navClass} onClick={() => setMenuOpen(false)}>
+            <NavLink
+              to="/items/new"
+              onClick={() => setMenuOpen(false)}
+              className={() =>
+                'rounded-full bg-black px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.28)] ring-1 ring-black/20 transition hover:opacity-95 dark:bg-white dark:text-ink'
+              }
+            >
               Report Item
             </NavLink>
             <NavLink to="/dashboard#my-reports" className={navClass} onClick={() => setMenuOpen(false)}>
@@ -165,7 +176,14 @@ export default function AppShell() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2v20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span>Lost</span>
           </NavLink>
-          <NavLink to="/items/new" className={({ isActive }) => (isActive ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-white bg-moss rounded-xl px-3 py-2' : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-white bg-moss rounded-xl px-3 py-2') }>
+          <NavLink
+            to="/items/new"
+            className={({ isActive }) =>
+              isActive
+                ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-white bg-black rounded-xl px-3 py-2'
+                : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-white bg-black rounded-xl px-3 py-2'
+            }
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span>Report</span>
           </NavLink>

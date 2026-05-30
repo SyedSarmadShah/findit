@@ -13,6 +13,7 @@ import {
   getDashboardAnalytics,
   type DashboardAnalytics,
   listClaimHistory,
+  getItem,
   listItems,
   listMatches,
   listNotifications,
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const [foundItems, setFoundItems] = useState<Item[]>([])
   const [matches, setMatches] = useState<ItemMatch[]>([])
   const [reports, setReports] = useState<ItemClaim[]>([])
+  const [reportsWithItems, setReportsWithItems] = useState<(ItemClaim & { item_obj?: Item })[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
@@ -59,7 +61,23 @@ export default function DashboardPage() {
       if (lostResult.status === 'fulfilled') setLostItems(lostResult.value)
       if (foundResult.status === 'fulfilled') setFoundItems(foundResult.value)
       if (matchResult.status === 'fulfilled') setMatches(matchResult.value)
-      if (reportsResult.status === 'fulfilled') setReports(reportsResult.value)
+      if (reportsResult.status === 'fulfilled') {
+        const fetchedReports = reportsResult.value
+        setReports(fetchedReports)
+
+        try {
+          const uniqueIds = Array.from(new Set(fetchedReports.map((r) => r.item)))
+          const itemsSettled = await Promise.allSettled(uniqueIds.map((id) => getItem(id)))
+          const itemsMap: Record<number, Item | undefined> = {}
+          itemsSettled.forEach((res, idx) => {
+            if (res.status === 'fulfilled') itemsMap[uniqueIds[idx]] = res.value
+          })
+          setReportsWithItems(fetchedReports.map((r) => ({ ...r, item_obj: itemsMap[r.item] })))
+        } catch {
+          // ignore item fetch failures — we'll still show basic report info
+          setReportsWithItems(fetchedReports)
+        }
+      }
       if (notificationsResult.status === 'fulfilled') setNotifications(notificationsResult.value)
 
       const failures = [analyticsResult, lostResult, foundResult, matchResult, reportsResult, notificationsResult].filter((result) => result.status === 'rejected')
@@ -170,11 +188,14 @@ export default function DashboardPage() {
 
   const filteredReports = useMemo(
     () =>
-      reports.filter((report) => {
+      reportsWithItems.length ? reportsWithItems.filter((report) => {
+        if (!normalizedQuery) return true
+        return [report.item_title ?? '', report.reason, report.details, report.status].some((value) => value.toLowerCase().includes(normalizedQuery))
+      }) : reports.filter((report) => {
         if (!normalizedQuery) return true
         return [report.item_title ?? '', report.reason, report.details, report.status].some((value) => value.toLowerCase().includes(normalizedQuery))
       }),
-    [normalizedQuery, reports],
+    [normalizedQuery, reports, reportsWithItems],
   )
 
 

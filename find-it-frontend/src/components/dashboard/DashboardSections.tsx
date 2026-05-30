@@ -30,7 +30,7 @@ type RecentItemsProps = {
 }
 
 type ReportTrackerProps = {
-  reports: ItemClaim[]
+  reports: (ItemClaim & { item_obj?: Item })[]
 }
 
 type CampusMapProps = {
@@ -515,11 +515,21 @@ export function ReportTrackerPanel({ reports }: ReportTrackerProps) {
             const progress = getReportProgress(report.status)
             return (
               <article key={report.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 dark:border-white/10 dark:bg-white/5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Claim #{report.id}</p>
-                    <h3 className="mt-2 font-display text-xl font-bold tracking-tight text-slate-950 dark:text-white">{report.item_title || `Item ${report.item}`}</h3>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-4">
+                    {report.item_obj ? (
+                      <img src={report.item_obj.image_url ?? report.item_obj.image ?? LOST_PLACEHOLDER_IMAGE} alt={report.item_obj.title} className="h-20 w-28 rounded-md object-cover" />
+                    ) : (
+                      <div className="h-20 w-28 rounded-md bg-slate-100 dark:bg-slate-900/40" />
+                    )}
+
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Claim #{report.id}</p>
+                      <h3 className="mt-2 font-display text-xl font-bold tracking-tight text-slate-950 dark:text-white">{report.item_title || report.item_obj?.title || `Item ${report.item}`}</h3>
+                      {report.item_obj ? <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{report.item_obj.location} · {report.item_obj.category}</p> : null}
+                    </div>
                   </div>
+
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${statusTone(report.status)}`}>
                     {report.status}
                   </span>
