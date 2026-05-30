@@ -42,12 +42,11 @@ export type ItemClaim = {
 
 export type Notification = {
   id: number
-  recipient: number
-  kind: 'claim_submitted' | 'claim_approved' | 'claim_rejected' | 'match_suggested'
+  user: number
   title: string
-  body: string
-  claim?: number | null
-  match?: number | null
+  message: string
+  type: 'new_match_found' | 'claim_request_received' | 'claim_approved' | 'claim_rejected' | 'item_returned' | 'new_comment' | 'admin_announcement'
+  reference_id?: number | null
   is_read: boolean
   created_at: string
 }
@@ -152,6 +151,21 @@ export async function reportItem(payload: { item: number; reason: string; detail
 
 export async function listNotifications() {
   const { data } = await api.get<Notification[]>('/messaging/notifications/')
+  return data
+}
+
+export async function markNotificationRead(id: number) {
+  const { data } = await api.post<Notification>(`/messaging/notifications/${id}/mark_read/`)
+  return data
+}
+
+export async function markAllNotificationsRead() {
+  const { data } = await api.post<{ updated: number }>('/messaging/notifications/mark_all_read/')
+  return data
+}
+
+export async function deleteNotification(id: number) {
+  const { data } = await api.delete(`/messaging/notifications/${id}/`)
   return data
 }
 

@@ -15,5 +15,5 @@ class MessageAdmin(admin.ModelAdmin):
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ("recipient", "kind", "is_read", "created_at")
-    list_filter = ("kind", "is_read", "created_at")
+    list_display = ("user", "type", "is_read", "created_at")
+    list_filter = ("type", "is_read", "created_at")

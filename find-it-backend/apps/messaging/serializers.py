@@ -35,5 +35,5 @@ class ConversationSerializer(serializers.ModelSerializer):
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = ("id", "recipient", "kind", "title", "body", "claim", "match", "is_read", "created_at")
-        read_only_fields = fields
+        fields = ("id", "user", "title", "message", "type", "reference_id", "is_read", "created_at")
+        read_only_fields = ("id", "user", "created_at")

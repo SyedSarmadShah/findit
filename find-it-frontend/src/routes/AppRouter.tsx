@@ -4,6 +4,7 @@ import ProtectedRoute from '../components/auth/ProtectedRoute'
 import LoginPage from '../pages/auth/LoginPage'
 import SignupPage from '../pages/auth/SignupPage'
 import DashboardPage from '../pages/dashboard/DashboardPage'
+import NotificationsPage from '../pages/notifications/NotificationsPage'
 import LostItemsPage from '../pages/items/LostItemsPage'
 import FoundItemsPage from '../pages/items/FoundItemsPage'
 import NewItemPage from '../pages/items/NewItemPage'
@@ -25,6 +26,7 @@ export default function AppRouter() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/items/lost" element={<LostItemsPage />} />
         <Route path="/items/found" element={<FoundItemsPage />} />
         <Route path="/items/:id" element={<ItemDetailPage />} />

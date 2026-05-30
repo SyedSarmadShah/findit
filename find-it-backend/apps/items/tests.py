@@ -61,7 +61,7 @@ class ItemTests(APITestCase):
         claim = ItemClaim.objects.get()
         self.assertEqual(claim.finder, self.user1)
         self.assertEqual(claim.answers['brand'], 'Fossil')
-        self.assertTrue(Notification.objects.filter(recipient=self.user1, claim=claim).exists())
+        self.assertTrue(Notification.objects.filter(user=self.user1, reference_id=claim.id, type='claim_request_received').exists())
 
         history_url = reverse('item-claim-history')
         history_resp = self.client.get(history_url)
@@ -125,7 +125,32 @@ class ItemTests(APITestCase):
         self.assertEqual(claim.status, ItemClaim.APPROVED)
         self.assertEqual(claim.verification_notes, 'Matched the initials and card contents.')
         self.assertEqual(item.status, Item.RESOLVED)
-        self.assertTrue(Notification.objects.filter(recipient=self.user2, claim=claim, kind='claim_approved').exists())
+        self.assertTrue(Notification.objects.filter(user=self.user2, reference_id=claim.id, type='claim_approved').exists())
+
+    def test_finder_can_mark_claim_returned(self):
+        item = Item.objects.create(owner=self.user1, item_type='found', title='Wallet', description='Black wallet', date='2026-05-01')
+        claim = ItemClaim.objects.create(
+            item=item,
+            claimant=self.user2,
+            finder=self.user1,
+            status=ItemClaim.APPROVED,
+            answers={
+                'brand': 'Fossil',
+                'unique_marks': 'Blue sticker',
+                'item_contents': 'Transit card',
+                'additional_details': 'Inside pocket note.',
+            },
+        )
+
+        self.client.force_authenticate(user=self.user1)
+        resp = self.client.post(reverse('item-claim-mark-returned', args=[claim.id]), {}, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        claim.refresh_from_db()
+        item.refresh_from_db()
+        self.assertEqual(claim.status, ItemClaim.COMPLETED)
+        self.assertEqual(item.status, Item.RESOLVED)
+        self.assertTrue(Notification.objects.filter(user=self.user2, reference_id=item.id, type='item_returned').exists())
 
     def test_matching_engine_creates_suggested_match_and_notifications(self):
         lost_item = Item.objects.create(
@@ -161,8 +186,8 @@ class ItemTests(APITestCase):
         self.assertEqual(match.found_item.item_type, Item.FOUND)
         self.assertGreater(match.score, 70)
         self.assertEqual(match.status, ItemMatch.SUGGESTED)
-        self.assertTrue(Notification.objects.filter(recipient=self.user1, match=match, kind='match_suggested').exists())
-        self.assertTrue(Notification.objects.filter(recipient=self.user2, match=match, kind='match_suggested').exists())
+        self.assertTrue(Notification.objects.filter(user=self.user1, reference_id=match.id, type='new_match_found').exists())
+        self.assertTrue(Notification.objects.filter(user=self.user2, reference_id=match.id, type='new_match_found').exists())
         lost_item.refresh_from_db()
         self.assertEqual(lost_item.status, Item.MATCHED)
 

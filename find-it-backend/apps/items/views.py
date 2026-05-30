@@ -11,7 +11,7 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from .matching import create_matches_for_item
 from .models import Item, ItemClaim, ItemMatch, ItemReport
 from .serializers import ItemClaimSerializer, ItemMatchSerializer, ItemReportSerializer, ItemSerializer
-from apps.messaging.models import Notification
+from apps.messaging.services import notify_claim_received, notify_claim_reviewed, notify_item_returned
 
 
 class ItemViewSet(viewsets.ModelViewSet):
@@ -75,13 +75,7 @@ class ItemClaimViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You have already submitted a claim for this item.")
 
         claim = serializer.save(claimant=user, finder=item.owner)
-        Notification.objects.create(
-            recipient=item.owner,
-            kind=Notification.CLAIM_SUBMITTED,
-            title="New claim submitted",
-            body=f"{user.email} submitted a claim for {item.title}.",
-            claim=claim,
-        )
+        notify_claim_received(user=item.owner, claim_id=claim.id, item_title=item.title, claimant_email=user.email)
 
     def perform_update(self, serializer):
         claim = self.get_object()
@@ -128,21 +122,9 @@ class ItemClaimViewSet(viewsets.ModelViewSet):
             if new_status == ItemClaim.APPROVED:
                 claim.item.status = Item.RESOLVED
                 claim.item.save(update_fields=["status", "updated_at"])
-                Notification.objects.create(
-                    recipient=claim.claimant,
-                    kind=Notification.CLAIM_APPROVED,
-                    title="Claim approved",
-                    body=f"Your claim for {claim.item.title} was approved.",
-                    claim=claim,
-                )
+                notify_claim_reviewed(user=claim.claimant, claim_id=claim.id, item_title=claim.item.title, approved=True)
             else:
-                Notification.objects.create(
-                    recipient=claim.claimant,
-                    kind=Notification.CLAIM_REJECTED,
-                    title="Claim rejected",
-                    body=f"Your claim for {claim.item.title} was rejected.",
-                    claim=claim,
-                )
+                notify_claim_reviewed(user=claim.claimant, claim_id=claim.id, item_title=claim.item.title, approved=False)
 
         return Response(self.get_serializer(claim).data)
 
@@ -153,6 +135,26 @@ class ItemClaimViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
         return self._review_claim(request, ItemClaim.REJECTED)
+
+    @action(detail=True, methods=["post"], url_path="mark-returned")
+    def mark_returned(self, request, pk=None):
+        claim = self.get_object()
+        user = request.user
+
+        if not (user.is_staff or claim.finder_id == user.id):
+            raise PermissionDenied("Only the finder can mark an item as returned.")
+
+        if claim.status != ItemClaim.APPROVED:
+            raise PermissionDenied("Only approved claims can be marked as returned.")
+
+        with transaction.atomic():
+            claim.status = ItemClaim.COMPLETED
+            claim.save(update_fields=["status", "updated_at"])
+            claim.item.status = Item.RESOLVED
+            claim.item.save(update_fields=["status", "updated_at"])
+            notify_item_returned(user=claim.claimant, item_id=claim.item_id, item_title=claim.item.title)
+
+        return Response(self.get_serializer(claim).data)
 
     def perform_destroy(self, instance):
         user = self.request.user

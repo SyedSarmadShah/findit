@@ -304,10 +304,10 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold text-ink dark:text-paper">{notification.title}</p>
-                      <p className="mt-1 text-sm text-ink/65 dark:text-paper/65">{notification.body}</p>
+                      <p className="mt-1 text-sm text-ink/65 dark:text-paper/65">{notification.message}</p>
                     </div>
                     <span className="rounded-full bg-black/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/60 dark:bg-white/10 dark:text-paper/70">
-                      {notification.kind.replace('_', ' ')}
+                      {notification.type.replaceAll('_', ' ')}
                     </span>
                   </div>
                 </article>

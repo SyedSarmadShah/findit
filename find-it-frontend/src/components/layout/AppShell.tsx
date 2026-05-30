@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import NotificationBell from '../notifications/NotificationBell'
 import ThemeToggle from '../ui/ThemeToggle'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -77,6 +78,7 @@ export default function AppShell() {
             <NavLink to="/items/new" className={() => 'rounded-full bg-moss px-4 py-2 text-sm font-medium text-paper transition hover:opacity-90 dark:bg-paper dark:text-ink'}>
               Post item
             </NavLink>
+            <NotificationBell />
             <ThemeToggle theme={theme} onToggle={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))} />
             <span className="ml-2 rounded-full border border-black/5 bg-black/5 px-4 py-2 text-sm text-ink/70 dark:border-white/10 dark:bg-white/5 dark:text-paper/70">
               {displayName}
@@ -87,6 +89,7 @@ export default function AppShell() {
           </div>
 
           <div className="flex items-center gap-2 lg:hidden">
+            <NotificationBell />
             <ThemeToggle theme={theme} onToggle={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))} />
             <button
               type="button"
@@ -129,6 +132,9 @@ export default function AppShell() {
             </NavLink>
             <NavLink to="/items/new" className={navClass} onClick={() => setMenuOpen(false)}>
               Post item
+            </NavLink>
+            <NavLink to="/notifications" className={navClass} onClick={() => setMenuOpen(false)}>
+              Notifications
             </NavLink>
             <div className="flex items-center justify-between gap-3 rounded-full bg-black/5 px-4 py-2 text-sm text-ink/70 dark:bg-white/5 dark:text-paper/70">
               <span className="truncate">{displayName}</span>

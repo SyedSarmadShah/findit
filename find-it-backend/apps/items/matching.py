@@ -8,7 +8,7 @@ from typing import Iterable
 from django.db import transaction
 from django.db.models import Q
 
-from apps.messaging.models import Notification
+from apps.messaging.services import notify_new_match
 
 from .models import Item, ItemMatch
 
@@ -160,16 +160,13 @@ def _ensure_match_visibility(item_match: ItemMatch) -> None:
 
 
 def _notify_match(item_match: ItemMatch) -> None:
-    recipients = [item_match.lost_item.owner, item_match.found_item.owner]
-    context_item = item_match.found_item if item_match.lost_item.item_type == Item.LOST else item_match.lost_item
-    for recipient in recipients:
-        Notification.objects.create(
-            recipient=recipient,
-            kind=Notification.MATCH_SUGGESTED,
-            title="Possible match found",
-            body=f"We found a possible match for {context_item.title} with a score of {item_match.score}%.",
-            match=item_match,
-        )
+    notify_new_match(
+        lost_owner=item_match.lost_item.owner,
+        found_owner=item_match.found_item.owner,
+        match_id=item_match.id,
+        item_title=item_match.found_item.title if item_match.lost_item.item_type == Item.LOST else item_match.lost_item.title,
+        score=item_match.score,
+    )
 
 
 def create_matches_for_item(item: Item) -> list[ItemMatch]:
