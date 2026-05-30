@@ -257,7 +257,7 @@ export function CategoryFilters({ selectedCategory, onCategoryChange }: Pick<Sea
 export function DashboardHero({ recoveredCount, successRate, activeReports }: DashboardHeroProps) {
   return (
     <section className="overflow-hidden rounded-[2rem] border border-slate-200/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(240,253,244,0.95))] shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.88),rgba(8,47,73,0.84))]">
-      <div className="grid gap-10 p-6 sm:p-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:p-10">
+      <div className="p-6 sm:p-8 lg:p-10">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm backdrop-blur dark:border-emerald-500/20 dark:bg-white/5 dark:text-slate-100">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
@@ -265,7 +265,7 @@ export function DashboardHero({ recoveredCount, successRate, activeReports }: Da
           </div>
 
           <div className="space-y-4">
-            <h1 className="max-w-2xl font-display text-4xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-5xl lg:text-6xl">
+            <h1 className="max-w-2xl whitespace-nowrap font-display text-[clamp(2.25rem,4.8vw,4rem)] font-bold tracking-tight leading-none text-slate-950 dark:text-white">
               Lost Something on Campus?
             </h1>
             <p className="max-w-2xl text-base leading-8 text-slate-600 dark:text-slate-300 sm:text-lg">
@@ -300,59 +300,6 @@ export function DashboardHero({ recoveredCount, successRate, activeReports }: Da
             <div className="rounded-3xl border border-white/60 bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Active reports</p>
               <p className="mt-2 font-display text-2xl font-bold text-slate-950 dark:text-white">{activeReports.toLocaleString()}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative mx-auto w-full max-w-xl">
-          <div className="absolute inset-0 -z-10 rounded-[2rem] bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.18),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(15,23,42,0.08),transparent_42%)] blur-3xl" />
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-white/90 p-4 shadow-[0_24px_60px_rgba(15,23,42,0.14)] backdrop-blur dark:border-white/10 dark:bg-slate-950/55 sm:p-6">
-            <div className="grid gap-4 sm:grid-cols-[0.95fr_1.05fr] sm:items-center">
-              <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600 dark:text-emerald-300">Smart recovery</p>
-                <h2 className="font-display text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
-                  One place to report, search, match, and recover.
-                </h2>
-                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  Designed for fast action on mobile and calm clarity on desktop.
-                </p>
-              </div>
-
-              <div className="relative h-60 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(240,253,244,0.95),rgba(255,255,255,0.98))] p-4 dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(15,23,42,0.7))]">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(20,83,45,0.22),transparent_35%)]" />
-                <div className="absolute left-5 top-5 h-24 w-24 rounded-full bg-emerald-400/20 blur-2xl" />
-                <div className="absolute right-7 top-6 h-28 w-28 rounded-full bg-slate-900/10 blur-3xl dark:bg-white/10" />
-
-                <div className="relative flex h-full flex-col justify-between">
-                  <div className="flex items-center justify-between">
-                    <div className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white dark:bg-white dark:text-slate-900">Live campus feed</div>
-                    <div className="rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:border-emerald-500/20 dark:bg-white/5 dark:text-emerald-200">92% match confidence</div>
-                  </div>
-
-                  <div className="grid gap-3">
-                    <div className="flex items-center gap-3 rounded-[1.25rem] bg-white/90 p-3 shadow-sm dark:bg-white/5">
-                      <div className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950">L</div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-950 dark:text-white">Lost wallet reported</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Library, 2 hours ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 rounded-[1.25rem] bg-white/90 p-3 shadow-sm dark:bg-white/5">
-                      <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-500 text-white">F</div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-950 dark:text-white">Found item posted</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Student union, 17 minutes ago</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                    <div className="rounded-2xl bg-white/85 p-3 text-center shadow-sm dark:bg-white/5">Search</div>
-                    <div className="rounded-2xl bg-white/85 p-3 text-center shadow-sm dark:bg-white/5">Match</div>
-                    <div className="rounded-2xl bg-white/85 p-3 text-center shadow-sm dark:bg-white/5">Return</div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
