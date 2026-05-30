@@ -56,9 +56,7 @@ export default function AppShell() {
       <header className="sticky top-0 z-40 border-b border-black/5 bg-[color:var(--app-bg)]/90 backdrop-blur-xl dark:border-white/10 dark:bg-[color:var(--app-bg)]/85">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-ink text-paper shadow-glow dark:bg-paper dark:text-ink sm:h-11 sm:w-11">
-              <span className="font-display text-lg font-bold">F</span>
-            </div>
+            <img src="/logo-find-it.png" alt="Find-It" className="h-10 w-10 rounded-2xl object-contain sm:h-11 sm:w-11" />
             <div>
               <div className="font-display text-lg font-bold tracking-tight sm:text-xl">Find-It</div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-ink/45 dark:text-paper/50 sm:text-xs sm:tracking-[0.24em]">Campus recovery network</div>

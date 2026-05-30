@@ -26,7 +26,7 @@ export default function AuthLayout({
         <div className="grid min-h-[calc(100vh-2rem)] w-full overflow-hidden rounded-[2rem] border border-white/65 bg-white/78 shadow-[0_30px_90px_rgba(34,20,17,0.22)] backdrop-blur-xl md:min-h-[calc(100vh-6rem)] md:grid-cols-[minmax(0,1.02fr)_minmax(320px,0.98fr)] md:rounded-[2.5rem]">
         <section className="flex flex-col items-start justify-center px-5 py-8 text-left sm:px-8 sm:py-10 lg:px-16">
           <div className="flex items-center gap-4">
-            <img src="/logo-find-it.png" alt="Find-It" className="h-12 w-12 object-contain sm:h-14" />
+            <img src="/logo-find-it.png" alt="Find-It" className="h-12 w-12 rounded-2xl object-contain sm:h-14" />
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#9b6a5f]">{eyebrow}</p>
               <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-[#1c1c1e] sm:text-4xl lg:text-5xl">{title}</h1>
