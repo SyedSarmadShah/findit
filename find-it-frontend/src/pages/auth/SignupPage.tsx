@@ -102,7 +102,7 @@ export default function SignupPage() {
         </div>
         {error ? <p className="text-sm text-[#9a4d43]">{error}</p> : null}
         <button
-          className="w-full rounded-2xl bg-[#a36d7c] px-4 py-3.5 font-medium text-white shadow-[0_16px_32px_rgba(163,109,124,0.28)] transition hover:-translate-y-0.5 hover:bg-[#94616f] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:bg-[#a36d7c]"
+          className="w-full rounded-2xl bg-[#a36d7c] px-4 py-3.5 font-medium text-white shadow-[0_16px_32px_rgba(163,109,124,0.28)] transition hover:-translate-y-0.5 hover:bg-[#94616f] active:translate-y-0 focus:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:bg-[#a36d7c]"
           type="submit"
           disabled={isSubmitting}
         >
