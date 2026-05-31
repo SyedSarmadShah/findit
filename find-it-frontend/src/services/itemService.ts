@@ -184,7 +184,7 @@ export async function listClaimReviewQueue() {
   return data
 }
 
-export async function approveClaim(id: number, payload?: { verification_notes?: string }) {
+export async function approveClaim(id: number, payload?: { verification_notes?: string; contact_number?: string }) {
   const { data } = await api.post<ItemClaim>(`/items/claims/${id}/approve/`, payload ?? {})
   return data
 }
