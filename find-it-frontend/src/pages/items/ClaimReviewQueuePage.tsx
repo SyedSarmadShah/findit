@@ -35,6 +35,14 @@ export default function ClaimReviewQueuePage() {
   const [busyId, setBusyId] = useState<number | null>(null)
   const [notesById, setNotesById] = useState<Record<number, string>>({})
   const [phoneById, setPhoneById] = useState<Record<number, string>>({})
+  const [pickupById, setPickupById] = useState<Record<number, string>>({})
+
+  const pickupLocationOptions = [
+    { value: 'eng', label: 'Mechanical Engineering, Electrical Engineering, Computer Engineering, Civil Engineering, and Biomedical Engineering' },
+    { value: 'cs', label: 'Computer Science and Software Engineering' },
+    { value: 'business', label: 'Management Sciences' },
+    { value: 'math_is', label: 'Mathematics, Islamic Studies, and Sciences & Humanities' },
+  ]
 
   const loadClaims = async () => {
     setLoading(true)
@@ -59,9 +67,11 @@ export default function ClaimReviewQueuePage() {
     try {
       const notes = notesById[claim.id]?.trim()
       const phone = phoneById[claim.id]?.trim()
+      const pickupLocation = pickupById[claim.id]?.trim()
       const payload: Record<string, any> = {}
       if (notes) payload.verification_notes = notes
       if (action === 'approve' && phone) payload.contact_number = phone
+      if (action === 'approve' && pickupLocation) payload.pickup_location = pickupLocation
 
       const updated = action === 'approve' ? await approveClaim(claim.id, payload) : await rejectClaim(claim.id, payload)
 
@@ -176,6 +186,28 @@ export default function ClaimReviewQueuePage() {
                         disabled={!isPending || isBusy}
                         className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-surface-strong"
                       />
+                    </label>
+
+                    <label className="grid gap-2 text-sm font-medium text-ink dark:text-paper">
+                      Department coordinator / pickup location (optional)
+                      <select
+                        value={pickupById[claim.id] ?? claim.pickup_location ?? ''}
+                        onChange={(event) =>
+                          setPickupById((current) => ({
+                            ...current,
+                            [claim.id]: event.target.value,
+                          }))
+                        }
+                        disabled={!isPending || isBusy}
+                        className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-surface-strong"
+                      >
+                        <option value="">Select a coordinator option</option>
+                        {pickupLocationOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                     </label>
 
                     <div className="flex flex-wrap items-center gap-3">

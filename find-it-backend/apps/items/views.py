@@ -267,7 +267,7 @@ class ItemClaimViewSet(viewsets.ModelViewSet):
                 claim.verification_notes = verification_notes.strip()
 
             # accept optional contact phone and pickup location when approving
-            contact_phone = request.data.get("contact_phone")
+            contact_phone = request.data.get("contact_phone") or request.data.get("contact_number")
             if isinstance(contact_phone, str) and contact_phone.strip():
                 claim.contact_phone = contact_phone.strip()
 
@@ -303,6 +303,7 @@ class ItemClaimViewSet(viewsets.ModelViewSet):
                     claim_id=claim.id,
                     item_title=claim.item.title,
                     approved=True,
+                    reviewer_name=claim.finder.full_name or claim.finder.email,
                     contact_phone=claim.contact_phone or None,
                     pickup_location=pickup_display,
                 )

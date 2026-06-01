@@ -40,15 +40,24 @@ def notify_claim_received(*, user: User, claim_id: int, item_title: str, claiman
 
 
 def notify_claim_reviewed(
-    *, user: User, claim_id: int, item_title: str, approved: bool, contact_phone: str | None = None, pickup_location: str | None = None
+    *,
+    user: User,
+    claim_id: int,
+    item_title: str,
+    approved: bool,
+    reviewer_name: str | None = None,
+    contact_phone: str | None = None,
+    pickup_location: str | None = None,
 ) -> None:
-    message = f"Your claim for {item_title} was {'approved' if approved else 'rejected' }."
+    message = f"Your claim for {item_title} was {'approved' if approved else 'rejected'}."
     if approved:
+        if reviewer_name:
+            message = f"Your claim for {item_title} was approved by {reviewer_name}."
         extras = []
         if contact_phone:
-            extras.append(f"Contact: {contact_phone}")
+            extras.append(f"Contact number: {contact_phone}")
         if pickup_location:
-            extras.append(f"Pickup Location: {pickup_location}")
+            extras.append(f"Pickup location: {pickup_location}")
         if extras:
             message = message + " " + " ".join(extras)
 

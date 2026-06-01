@@ -115,7 +115,11 @@ class ItemTests(APITestCase):
         self.client.force_authenticate(user=self.user1)
         resp = self.client.post(
             reverse('item-claim-approve', args=[claim.id]),
-            {'verification_notes': 'Matched the initials and card contents.'},
+            {
+                'verification_notes': 'Matched the initials and card contents.',
+                'contact_number': '+1 555 000 1234',
+                'pickup_location': ItemClaim.PICKUP_ENG,
+            },
             format='json',
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -124,8 +128,13 @@ class ItemTests(APITestCase):
         item.refresh_from_db()
         self.assertEqual(claim.status, ItemClaim.APPROVED)
         self.assertEqual(claim.verification_notes, 'Matched the initials and card contents.')
+        self.assertEqual(claim.contact_phone, '+1 555 000 1234')
+        self.assertEqual(claim.pickup_location, ItemClaim.PICKUP_ENG)
         self.assertEqual(item.status, Item.RESOLVED)
-        self.assertTrue(Notification.objects.filter(user=self.user2, reference_id=claim.id, type='claim_approved').exists())
+        notification = Notification.objects.get(user=self.user2, reference_id=claim.id, type='claim_approved')
+        self.assertIn('approved by', notification.message)
+        self.assertIn('Contact number: +1 555 000 1234', notification.message)
+        self.assertIn('Pickup location:', notification.message)
 
     def test_finder_can_mark_claim_returned(self):
         item = Item.objects.create(owner=self.user1, item_type='found', title='Wallet', description='Black wallet', date='2026-05-01')

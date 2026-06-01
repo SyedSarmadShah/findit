@@ -51,6 +51,7 @@ class ItemClaimSerializer(serializers.ModelSerializer):
     item_owner = serializers.IntegerField(source="item.owner_id", read_only=True)
     claimant_email = serializers.EmailField(source="claimant.email", read_only=True)
     finder_email = serializers.EmailField(source="finder.email", read_only=True)
+    finder_full_name = serializers.CharField(source="finder.full_name", read_only=True)
     can_review = serializers.SerializerMethodField()
 
     class Meta:
@@ -64,6 +65,7 @@ class ItemClaimSerializer(serializers.ModelSerializer):
             "claimant_email",
             "finder",
             "finder_email",
+            "finder_full_name",
             "answers",
             "contact_phone",
             "pickup_location",
@@ -79,6 +81,7 @@ class ItemClaimSerializer(serializers.ModelSerializer):
             "claimant_email",
             "finder",
             "finder_email",
+            "finder_full_name",
             "item_title",
             "item_owner",
             "contact_phone",

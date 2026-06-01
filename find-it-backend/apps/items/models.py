@@ -62,10 +62,10 @@ class ItemClaim(models.Model):
     PICKUP_BUSINESS = "business"
     PICKUP_MATH_IS = "math_is"
     PICKUP_LOCATION_CHOICES = [
-        (PICKUP_ENG, "Mechanical, Electrical, Computer, Civil, and Biomedical Engineering"),
-        (PICKUP_CS, "Computer Science, Software Engineering, Artificial Intelligence, and Cyber Security"),
-        (PICKUP_BUSINESS, "Business Administration and Accounting & Finance"),
-        (PICKUP_MATH_IS, "Mathematics and Islamic Studies Coordinator's"),
+        (PICKUP_ENG, "Mechanical Engineering, Electrical Engineering, Computer Engineering, Civil Engineering, and Biomedical Engineering"),
+        (PICKUP_CS, "Computer Science and Software Engineering"),
+        (PICKUP_BUSINESS, "Management Sciences"),
+        (PICKUP_MATH_IS, "Mathematics, Islamic Studies, and Sciences & Humanities"),
     ]
     pickup_location = models.CharField(max_length=40, choices=PICKUP_LOCATION_CHOICES, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
