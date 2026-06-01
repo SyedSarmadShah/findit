@@ -7,7 +7,6 @@ import {
   RecentFoundItems,
   RecentLostItems,
   ReportTrackerPanel,
-  SearchSection,
 } from '../../components/dashboard/DashboardSections'
 import {
   getDashboardAnalytics,
@@ -214,9 +213,6 @@ export default function DashboardPage() {
         recoveredCount={summary?.items_successfully_returned ?? 0}
         successRate={summary?.success_percentage ?? 0}
         activeReports={summary?.active_reports ?? 0}
-      />
-
-      <SearchSection
         query={searchQuery}
         onQueryChange={setSearchQuery}
         selectedCategory={selectedCategory}

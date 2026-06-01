@@ -16,6 +16,11 @@ type DashboardHeroProps = {
   recoveredCount: number
   successRate: number
   activeReports: number
+  query: string
+  onQueryChange: (value: string) => void
+  selectedCategory: string
+  onCategoryChange: (category: string) => void
+  resultCount: number
 }
 
 type AIMatchSuggestionsProps = {
@@ -257,17 +262,26 @@ export function CategoryFilters({ selectedCategory, onCategoryChange }: Pick<Sea
   )
 }
 
-export function DashboardHero({ recoveredCount, successRate, activeReports }: DashboardHeroProps) {
+export function DashboardHero({
+  recoveredCount,
+  successRate,
+  activeReports,
+  query,
+  onQueryChange,
+  selectedCategory,
+  onCategoryChange,
+  resultCount,
+}: DashboardHeroProps) {
   return (
     <section className="overflow-hidden rounded-[2rem] border border-slate-200/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(240,253,244,0.95))] shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-[linear-gradient(135deg,rgba(15,23,42,0.88),rgba(8,47,73,0.84))]">
       <div className="p-6 sm:p-8 lg:p-10">
-        <div className="space-y-6">
+        <div className="space-y-7">
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm backdrop-blur dark:border-emerald-500/20 dark:bg-white/5 dark:text-slate-100">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
             Campus recovery made simple
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h1 className="max-w-2xl whitespace-nowrap font-display text-[clamp(2.25rem,4.8vw,4rem)] font-bold tracking-tight leading-none text-slate-950 dark:text-white">
               Lost Something on Campus?
             </h1>
@@ -276,16 +290,45 @@ export function DashboardHero({ recoveredCount, successRate, activeReports }: Da
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="space-y-4">
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400 dark:text-slate-500">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M21 21l-4.35-4.35" />
+                  <circle cx="10" cy="10" r="6" />
+                </svg>
+              </span>
+              <input
+                value={query}
+                onChange={(event) => onQueryChange(event.target.value)}
+                placeholder="Search wallet, keys, ID card, calculator..."
+                className="h-14 w-full rounded-[1.5rem] border border-slate-200 bg-white px-12 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 dark:border-white/10 dark:bg-slate-950/40 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/5 sm:h-16"
+              />
+              <div className="pointer-events-none absolute inset-y-0 right-4 hidden items-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 sm:flex dark:text-slate-500">
+                Instant search
+              </div>
+            </div>
+
+            <CategoryFilters selectedCategory={selectedCategory} onCategoryChange={onCategoryChange} />
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-white/5 dark:text-slate-300">
+              <p>
+                Showing <span className="font-semibold text-slate-900 dark:text-white">{resultCount}</span> matching items
+              </p>
+              {selectedCategory ? <p>Filtered by {selectedCategory}</p> : <p>Across all categories</p>}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-[1.2fr_0.8fr]">
             <Link
               to="/items/new"
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+              className="inline-flex h-14 items-center justify-center rounded-full bg-slate-950 px-6 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(15,23,42,0.2)] transition hover:-translate-y-0.5 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
             >
               Report Lost Item
             </Link>
             <Link
               to="/items/new"
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+              className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
             >
               Report Found Item
             </Link>
