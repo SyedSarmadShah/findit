@@ -70,6 +70,26 @@ def notify_claim_reviewed(
     )
 
 
+def notify_claim_awaiting_receipt(*, user: User, claim_id: int, item_title: str) -> None:
+    create_notification(
+        user=user,
+        notification_type=Notification.CLAIM_AWAITING_RECEIPT,
+        title="Claim ready for pickup",
+        message=f"Your claim for {item_title} was approved. Click \"Mark received\" after pickup to complete the recovery.",
+        reference_id=claim_id,
+    )
+
+
+def notify_claim_completed(*, user: User, claim_id: int, item_title: str, claimant_email: str) -> None:
+    create_notification(
+        user=user,
+        notification_type=Notification.CLAIM_COMPLETED,
+        title="Claim completed",
+        message=f"{claimant_email} has confirmed receipt of {item_title}.",
+        reference_id=claim_id,
+    )
+
+
 def notify_item_returned(*, user: User, item_id: int, item_title: str) -> None:
     create_notification(
         user=user,

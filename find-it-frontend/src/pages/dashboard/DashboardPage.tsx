@@ -99,6 +99,11 @@ export default function DashboardPage() {
   useEffect(() => {
     void loadDashboard({ silent: false, showError: true })
 
+    const handleClaimsUpdated = () => {
+      void loadDashboard({ silent: true, showError: false })
+    }
+    window.addEventListener('claims:updated', handleClaimsUpdated)
+
     const intervalId = window.setInterval(() => {
       void loadDashboard({ silent: true, showError: false })
     }, 30000)
@@ -116,6 +121,7 @@ export default function DashboardPage() {
       window.clearInterval(intervalId)
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', onFocus)
+      window.removeEventListener('claims:updated', handleClaimsUpdated)
     }
   }, [])
 

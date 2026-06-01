@@ -29,6 +29,8 @@ class Notification(models.Model):
     CLAIM_REQUEST_RECEIVED = "claim_request_received"
     CLAIM_APPROVED = "claim_approved"
     CLAIM_REJECTED = "claim_rejected"
+    CLAIM_AWAITING_RECEIPT = "claim_awaiting_receipt"
+    CLAIM_COMPLETED = "claim_completed"
     ITEM_RETURNED = "item_returned"
     NEW_COMMENT = "new_comment"
     ADMIN_ANNOUNCEMENT = "admin_announcement"
@@ -38,6 +40,8 @@ class Notification(models.Model):
         (CLAIM_REQUEST_RECEIVED, "Claim request received"),
         (CLAIM_APPROVED, "Claim approved"),
         (CLAIM_REJECTED, "Claim rejected"),
+        (CLAIM_AWAITING_RECEIPT, "Claim awaiting receipt"),
+        (CLAIM_COMPLETED, "Claim completed"),
         (ITEM_RETURNED, "Item returned"),
         (NEW_COMMENT, "New comment"),
         (ADMIN_ANNOUNCEMENT, "Admin announcement"),

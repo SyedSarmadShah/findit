@@ -16,7 +16,13 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from .matching import create_matches_for_item
 from .models import Item, ItemClaim, ItemMatch, ItemReport
 from .serializers import ItemClaimSerializer, ItemMatchSerializer, ItemReportSerializer, ItemSerializer
-from apps.messaging.services import notify_claim_received, notify_claim_reviewed, notify_item_returned
+from apps.messaging.services import (
+    notify_claim_received,
+    notify_claim_reviewed,
+    notify_item_returned,
+    notify_claim_awaiting_receipt,
+    notify_claim_completed,
+)
 
 
 User = get_user_model()
@@ -307,8 +313,31 @@ class ItemClaimViewSet(viewsets.ModelViewSet):
                     contact_phone=claim.contact_phone or None,
                     pickup_location=pickup_display,
                 )
+                # Prompt the claimant to confirm receipt once the claim is approved
+                notify_claim_awaiting_receipt(user=claim.claimant, claim_id=claim.id, item_title=claim.item.title)
             else:
                 notify_claim_reviewed(user=claim.claimant, claim_id=claim.id, item_title=claim.item.title, approved=False)
+
+        return Response(self.get_serializer(claim).data)
+
+    @action(detail=True, methods=["post"], url_path="confirm-received")
+    def confirm_received(self, request, pk=None):
+        claim = self.get_object()
+        user = request.user
+
+        if claim.claimant_id != user.id and not user.is_staff:
+            raise PermissionDenied("Only the claimant can confirm receipt of this item.")
+
+        if claim.status != ItemClaim.APPROVED:
+            raise PermissionDenied("Only approved claims can be confirmed as received.")
+
+        with transaction.atomic():
+            claim.status = ItemClaim.COMPLETED
+            claim.save(update_fields=["status", "updated_at"])
+            claim.item.status = Item.RESOLVED
+            claim.item.save(update_fields=["status", "updated_at"])
+            # notify the finder/owner that claimant has confirmed receipt
+            notify_claim_completed(user=claim.finder, claim_id=claim.id, item_title=claim.item.title, claimant_email=claim.claimant.email)
 
         return Response(self.get_serializer(claim).data)
 
