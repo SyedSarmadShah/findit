@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { DashboardSummary, Item, ItemClaim, ItemMatch, Notification } from '../../services/itemService'
+import { confirmClaimReceived } from '../../services/itemService'
+import { useAuth } from '../../context/AuthContext'
 
 type SearchSectionProps = {
   query: string
@@ -466,6 +468,21 @@ export function RecentFoundItems(props: RecentItemsProps) {
 }
 
 export function ReportTrackerPanel({ reports }: ReportTrackerProps) {
+  const { user } = useAuth()
+  const [busyId, setBusyId] = useState<number | null>(null)
+
+  const handleConfirmReceived = async (claimId: number) => {
+    setBusyId(claimId)
+    try {
+      await confirmClaimReceived(claimId)
+      window.dispatchEvent(new Event('claims:updated'))
+    } catch {
+      // show a simple alert as a fallback — the parent app has a toast provider but not available here
+      // prefer to keep UI silent here; the dashboard will refresh on failure-free operations
+    } finally {
+      setBusyId(null)
+    }
+  }
   return (
     <section id="my-reports" className="space-y-4 rounded-[2rem] border border-slate-200/70 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.07)] dark:border-white/10 dark:bg-white/5 sm:p-6">
       <SectionHeading
@@ -521,12 +538,31 @@ export function ReportTrackerPanel({ reports }: ReportTrackerProps) {
                   </div>
                 </div>
 
-                <Link
+                {report.status === 'approved' && user?.id === report.claimant ? (
+                  <div className="mt-5 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void handleConfirmReceived(report.id)}
+                      disabled={busyId === report.id}
+                      className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      {busyId === report.id ? 'Processing...' : 'Mark received'}
+                    </button>
+                    <Link
+                      to={`/items/${report.item}`}
+                      className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    >
+                      Review item
+                    </Link>
+                  </div>
+                ) : (
+                  <Link
                   to={`/items/${report.item}`}
                   className="mt-5 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                 >
                   Review item
                 </Link>
+                )}
               </article>
             )
           })}
