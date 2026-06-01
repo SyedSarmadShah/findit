@@ -266,13 +266,46 @@ class ItemClaimViewSet(viewsets.ModelViewSet):
             if isinstance(verification_notes, str) and verification_notes.strip():
                 claim.verification_notes = verification_notes.strip()
 
+            # accept optional contact phone and pickup location when approving
+            contact_phone = request.data.get("contact_phone")
+            if isinstance(contact_phone, str) and contact_phone.strip():
+                claim.contact_phone = contact_phone.strip()
+
+            pickup = request.data.get("pickup_location")
+            if isinstance(pickup, str) and pickup.strip():
+                val = pickup.strip()
+                # allow either the choice key or the display label
+                choices = dict(ItemClaim.PICKUP_LOCATION_CHOICES)
+                # direct key
+                if val in choices:
+                    claim.pickup_location = val
+                else:
+                    # try matching display label (case-insensitive)
+                    for k, d in ItemClaim.PICKUP_LOCATION_CHOICES:
+                        if val.lower() == d.lower():
+                            claim.pickup_location = k
+                            break
+
             claim.status = new_status
-            claim.save(update_fields=["status", "verification_notes", "updated_at"])
+            update_fields = ["status", "verification_notes", "updated_at"]
+            if claim.contact_phone:
+                update_fields.append("contact_phone")
+            if claim.pickup_location:
+                update_fields.append("pickup_location")
+            claim.save(update_fields=update_fields)
 
             if new_status == ItemClaim.APPROVED:
                 claim.item.status = Item.RESOLVED
                 claim.item.save(update_fields=["status", "updated_at"])
-                notify_claim_reviewed(user=claim.claimant, claim_id=claim.id, item_title=claim.item.title, approved=True)
+                pickup_display = claim.get_pickup_location_display() if claim.pickup_location else None
+                notify_claim_reviewed(
+                    user=claim.claimant,
+                    claim_id=claim.id,
+                    item_title=claim.item.title,
+                    approved=True,
+                    contact_phone=claim.contact_phone or None,
+                    pickup_location=pickup_display,
+                )
             else:
                 notify_claim_reviewed(user=claim.claimant, claim_id=claim.id, item_title=claim.item.title, approved=False)
 

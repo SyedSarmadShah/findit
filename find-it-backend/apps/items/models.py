@@ -55,6 +55,19 @@ class ItemClaim(models.Model):
     finder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="finder_claims")
     answers = models.JSONField(default=dict)
     verification_notes = models.TextField(blank=True)
+    contact_phone = models.CharField(max_length=40, blank=True)
+
+    PICKUP_ENG = "eng"
+    PICKUP_CS = "cs"
+    PICKUP_BUSINESS = "business"
+    PICKUP_MATH_IS = "math_is"
+    PICKUP_LOCATION_CHOICES = [
+        (PICKUP_ENG, "Mechanical, Electrical, Computer, Civil, and Biomedical Engineering"),
+        (PICKUP_CS, "Computer Science, Software Engineering, Artificial Intelligence, and Cyber Security"),
+        (PICKUP_BUSINESS, "Business Administration and Accounting & Finance"),
+        (PICKUP_MATH_IS, "Mathematics and Islamic Studies Coordinator's"),
+    ]
+    pickup_location = models.CharField(max_length=40, choices=PICKUP_LOCATION_CHOICES, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
