@@ -11,7 +11,7 @@ type NotificationItemProps = {
   onConfirmReceived?: (claimId: number) => void
 }
 
-export default function NotificationItem({ notification, compact = false, busy = false, onMarkRead, onDelete }: NotificationItemProps) {
+export default function NotificationItem({ notification, compact = false, busy = false, onMarkRead, onDelete, onConfirmReceived }: NotificationItemProps) {
   const unread = !notification.is_read
 
   return (

@@ -65,7 +65,7 @@ export default function AppShell() {
 
           <div className="hidden items-center gap-2 lg:flex">
             <NavLink to="/dashboard" className={navClass}>
-              Home
+              Dashboard
             </NavLink>
             <NavLink to="/items/lost" className={navClass}>
               Lost Items
@@ -128,7 +128,7 @@ export default function AppShell() {
             </div>
             <div className="grid gap-2 rounded-[1.5rem] border border-black/5 bg-white/80 p-3 shadow-glow backdrop-blur dark:border-white/10 dark:bg-white/5">
             <NavLink to="/dashboard" className={navClass} onClick={() => setMenuOpen(false)}>
-              Home
+                Dashboard
             </NavLink>
             <NavLink to="/items/lost" className={navClass} onClick={() => setMenuOpen(false)}>
               Lost Items
@@ -147,12 +147,6 @@ export default function AppShell() {
               }
             >
               Report Item
-            </NavLink>
-            <NavLink to="/dashboard#my-reports" className={navClass} onClick={() => setMenuOpen(false)}>
-              My Reports
-            </NavLink>
-            <NavLink to="/profile" className={navClass} onClick={() => setMenuOpen(false)}>
-              Profile
             </NavLink>
             <NavLink to="/notifications" className={navClass} onClick={() => setMenuOpen(false)}>
               Notifications
@@ -176,7 +170,7 @@ export default function AppShell() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2">
           <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-ink' : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-ink/70') }>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13l9-9 9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <span>Home</span>
+            <span>Dashboard</span>
           </NavLink>
           <NavLink to="/items/lost" className={({ isActive }) => (isActive ? 'flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium text-ink' : 'flex flex-1 flex-col items-center gap-1 py-2 text-xs text-ink/70') }>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2v20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
